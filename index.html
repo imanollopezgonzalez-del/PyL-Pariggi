@@ -140,7 +140,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 </head>
 <body>
 <div class="hdr">
-  <div class="logo">Pariggi <span>P&L Dashboard v8</span></div>
+  <div class="logo">Pariggi <span>P&L Dashboard v9</span></div>
   <div class="period-wrap">
     <div class="live-dot"></div>
     <select class="period-sel" id="period-sel" onchange="setMonth(this.value)"></select>
@@ -196,7 +196,14 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 <div class="panel" id="tab-productos">
   <div class="s-title">Análisis por Producto</div>
   <div class="s-sub" id="prod-sub"></div>
-  <div class="g2">
+  <div class="g3">
+    <div class="card">
+      <div class="card-t">Resultado Bruto por Producto</div>
+      <table class="rtbl">
+        <thead><tr><th style="width:24px">#</th><th onclick="sRank('rb','n')">Producto</th><th onclick="sRank('rb','v')" style="text-align:right">RB $</th><th onclick="sRank('rb','p')" style="text-align:right">RB %</th></tr></thead>
+        <tbody id="rank-rb-body"></tbody>
+      </table>
+    </div>
     <div class="card">
       <div class="card-t">Contribución Marginal por Producto</div>
       <table class="rtbl">
@@ -228,12 +235,12 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
   <div class="s-sub" id="cli-sub"></div>
   <div class="g2">
     <div class="card">
-      <div class="card-t">Contribución Marginal por Cliente</div>
-      <div style="position:relative;width:100%;height:280px"><canvas id="ch-cli-cm" role="img" aria-label="Ranking CM por cliente">CM por cliente</canvas></div>
+      <div class="card-t">Participación en Ventas</div>
+      <div style="position:relative;width:100%;height:320px"><canvas id="ch-cli-pie" role="img" aria-label="Participacion ventas por cliente">Participación ventas</canvas></div>
     </div>
     <div class="card">
-      <div class="card-t">Participación en Ventas</div>
-      <div style="position:relative;width:100%;height:280px"><canvas id="ch-cli-pie" role="img" aria-label="Participacion ventas por cliente">Participación ventas</canvas></div>
+      <div class="card-t">Contribución Marginal por Cliente</div>
+      <div style="overflow-y:auto;max-height:320px"><canvas id="ch-cli-cm" role="img" aria-label="Ranking CM por cliente">CM por cliente</canvas></div>
     </div>
   </div>
   <div class="alert ag mt16"><strong>Comisión % s/Resultado Bruto:</strong> De cada peso de margen bruto del cliente, cuánto se destina en comisión al vendedor. Click en fila para ver detalle por producto.</div>
@@ -367,7 +374,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
   <!-- 5. VENTAS -->
   <div class="isec">
     <h3>5 — Descarga de Ventas</h3>
-    <p style="color:var(--text-d);font-size:11px;margin-bottom:12px">Sin encabezado. Columnas: <strong style="color:var(--gold)">Cliente | Producto | Kilos | Total c/IVA | Total s/IVA | Vendedor</strong></p>
+    <p style="color:var(--text-d);font-size:11px;margin-bottom:12px">Sin encabezado. Columnas: <strong style="color:var(--gold)">Cliente | Producto | Kilos | Total c/IVA | Total s/IVA | Vendedor</strong> — o con costo del sistema: <strong style="color:var(--gold-l)">Cliente | Producto | Kilos | Total c/IVA | Total s/IVA | Costo Total | Vendedor</strong>. Si incluís Costo Total se usa ese CMV en vez del maestro.</p>
     <div class="g2">
       <div>
         <div class="uz" onclick="document.getElementById('f-v').click()">
@@ -597,7 +604,7 @@ const SKU_RUBRO = {
 
 let ST={maestros:{sueldos:[{n:'Luciano',s:6000000,p:100},{n:'Joela',s:3878524,p:100},{n:'Imanol',s:1619889,p:25},{n:'Ivan',s:2433728,p:25},{n:'Rodrigo',s:1246069,p:25},{n:'Flavia',s:864000,p:25}],comisiones:[{v:'WEB',c:0},{v:'Hernan Orellana',c:5},{v:'Ivan Larez',c:3},{v:'German Thomas',c:3},{v:'Cristian Werbach',c:3},{v:'Imanol',c:3},{v:'Carlos Mendoza',c:3},{v:'Orciani',c:3},{v:'Joela',c:3},{v:'Pedro Marin',c:3}],productos:[{sku:6010,ns:'Bucatini',nd:'Bucatini',c:2917.22},{sku:10202,ns:'Cuerdas de guitarra al huevo',nd:'Cuerdas de Guitarra',c:2917.22},{sku:10208,ns:'Ñoquis de Pura Papa',nd:'Ñoquis de Pura Papa',c:2532.28},{sku:10201,ns:'Cables de Teléfono al Huevo',nd:'Raviolon de Espinaca',c:4399.44},{sku:10204,ns:'Sorrentinos de Jamon y Queso',nd:'Sorrentinos de Jamón y Queso',c:5519.28},{sku:70208,ns:'Fusilli Lunghi al huevo',nd:'Fusilli Lunghi al Huevo',c:3241.36},{sku:70205,ns:'Masa de Lasagna',nd:'Masa de Lasagna',c:2917.22},{sku:70206,ns:'Ravioles de Ricota y Hierbas',nd:'Ravioles de Ricota y Hierbas',c:4599.42},{sku:10205,ns:'Sorrentinos de Calabaza',nd:'Sorrentinos de Calabaza',c:4018.70},{sku:20301,ns:'Cables de Teléfono Integrales',nd:'Fusilli Integral',c:3241.36},{sku:10203,ns:'Puntallete 1.5 Kg',nd:'Puntallete 1.5 Kg',c:3748.94},{sku:10207,ns:'Puntalette 0.500 Kg',nd:'Puntalette 0.500 Kg',c:3748.94},{sku:10206,ns:'Ñoquis de Espinaca',nd:'Ñoquis de Espinaca',c:3708.00},{sku:10209,ns:'Ñoquis a la Romana',nd:'Ñoquis a la Romana',c:2778.48}],film:{u:20.5,g:8},rubros:['Sueldos','Alquileres y Servicios','Logística','Honorarios y Varios','Mantenimiento','Marketing','Gastos Bancarios']},months:{}};
 
-let AMK='2026-03',CH={},GF=null,RS={cm:{c:'v',d:-1},ro:{c:'v',d:-1}},PSC=-1,PSD=-1;
+let AMK='2026-03',CH={},GF=null,RS={rb:{c:'v',d:-1},cm:{c:'v',d:-1},ro:{c:'v',d:-1}},PSC=-1,PSD=-1;
 
 function AM(){return ST.months[AMK];}
 function fm(n,full=false){if(n===null||n===undefined||isNaN(n))return'—';if(full)return Math.round(n).toLocaleString('es-AR');const a=Math.abs(n);if(a>=1000000)return(n/1000000).toFixed(2).replace('.',',')+' M';if(a>=1000)return(n/1000).toFixed(1).replace('.',',')+' K';return Math.round(n).toLocaleString('es-AR');}
@@ -705,14 +712,49 @@ function renderProd(){const m=AM();if(!m){
   ['pv'].forEach(id=>{if(CH[id])CH[id].destroy();});
   return;
 }document.getElementById('prod-sub').textContent=m.periodo;renderRanks();renderProdChart(m);renderProdTbl();}
-function getCM(p){return(p.v-p.cmv-p.film)-p.iibb-p.com;}
-function sRank(w,c){if(RS[w].c===c)RS[w].d*=-1;else{RS[w].c=c;RS[w].d=-1;}renderRanks();}
-function renderRanks(){const m=AM();if(!m)return;const prods=m.productos;
-const sortFn=(w)=>(a,b)=>{const {c,d}=RS[w];if(c==='n')return d*(a.n.localeCompare(b.n));if(c==='v')return d*((w==='cm'?getCM(b):b.ro)-(w==='cm'?getCM(a):a.ro));if(c==='p')return d*((w==='cm'?(getCM(b)/b.v):(b.ro/b.v))-(w==='cm'?(getCM(a)/a.v):(a.ro/a.v)));return 0;};
-document.getElementById('rank-cm-body').innerHTML=[...prods].sort(sortFn('cm')).map((p,i)=>{const cm=getCM(p);const col=PC[prods.indexOf(p)%PC.length];return`<tr><td style="width:24px;color:var(--text-d);font-size:10px">${i+1}</td><td><span class="pdot" style="background:${col}"></span>${p.n}</td><td class="${vc(cm)}">$${fm(cm)}</td><td class="pct-c ${vc(cm)}">${fp(cm,p.v)}</td></tr>`;}).join('');
-document.getElementById('rank-ro-body').innerHTML=[...prods].sort(sortFn('ro')).map((p,i)=>{const col=PC[prods.indexOf(p)%PC.length];return`<tr><td style="width:24px;color:var(--text-d);font-size:10px">${i+1}</td><td><span class="pdot" style="background:${col}"></span>${p.n}</td><td class="${vc(p.ro)}">$${fm(p.ro)}</td><td class="pct-c ${vc(p.ro)}">${fp(p.ro,p.v)}</td></tr>`;}).join('');
-// update sort headers
-['cm','ro'].forEach(w=>{const tbl=document.getElementById('rank-'+w+'-body').closest('table');tbl.querySelectorAll('th').forEach(th=>{th.classList.remove('sa','sd');});});}
+function getRB(p){return p.v-p.cmv-p.film;}
+function getCM(p){return getRB(p)-p.iibb-p.com;}
+function getGO(p,tgo,tv){return tv>0?tgo*(p.v/tv):0;}
+function getRO(p,tgo,tv){return getCM(p)-getGO(p,tgo,tv);}
+function sRank(w,col){if(!RS[w])RS[w]={c:'v',d:-1};if(RS[w].c===col)RS[w].d*=-1;else{RS[w].c=col;RS[w].d=-1;}renderRanks();}
+function renderRanks(){
+  const m=AM();if(!m)return;
+  const prods=m.productos;
+  const tgo=Object.values(m.gastos).reduce((a,b)=>a+b,0);
+  const tv=prods.reduce((a,p)=>a+p.v,0);
+
+  const getVal=(p,w)=>{
+    if(w==='rb') return getRB(p);
+    if(w==='cm') return getCM(p);
+    if(w==='ro') return getRO(p,tgo,tv);
+    return 0;
+  };
+  const sortFn=(w)=>(a,b)=>{
+    const {c,d}=RS[w]||{c:'v',d:-1};
+    if(c==='n') return d*(a.n.localeCompare(b.n));
+    if(c==='v') return d*(getVal(b,w)-getVal(a,w));
+    if(c==='p') return d*((getVal(b,w)/b.v)-(getVal(a,w)/a.v));
+    return 0;
+  };
+
+  const makeRow=(p,i,w)=>{
+    const val=getVal(p,w);
+    const col=PC[prods.indexOf(p)%PC.length];
+    return`<tr><td style="width:24px;color:var(--text-d);font-size:10px">${i+1}</td>
+      <td><span class="pdot" style="background:${col}"></span>${p.n}</td>
+      <td class="${vc(val)}">$${fm(val)}</td>
+      <td class="pct-c ${vc(val)}">${fp(val,p.v)}</td></tr>`;
+  };
+
+  ['rb','cm','ro'].forEach(w=>{
+    const body=document.getElementById(`rank-${w}-body`);
+    if(!body) return;
+    body.innerHTML=[...prods].sort(sortFn(w)).map((p,i)=>makeRow(p,i,w)).join('');
+  });
+
+  // Update RS if rb not initialized
+  if(!RS.rb) RS.rb={c:'v',d:-1};
+}
 
 function renderProdChart(m){if(CH['pv'])CH['pv'].destroy();
 const prods=[...m.productos||[]].sort((a,b)=>b.v-a.v);
@@ -752,35 +794,59 @@ CH['pv']=new Chart(document.getElementById('ch-pv').getContext('2d'),{
 
 function renderProdTbl(){const m=AM();if(!m)return;const cols=['Producto','Kg','Ventas','CMV','Film','Util.Bruta%','IIBB','Comisiones','Contrib.Marginal','CM%','Gastos Op.','Res.Operativo','RO%'];
 const hd=document.getElementById('pnl-prod-head');hd.innerHTML='<tr>'+cols.map((c,i)=>`<th class="${i===0?'left':''}" onclick="sProd(${i})">${c}</th>`).join('')+'</tr>';
-const sorted=[...m.productos].sort((a,b)=>{if(PSC<0)return b.v-a.v;const gv=(p,i)=>{const rb=p.v-p.cmv-p.film,cm=getCM(p),go=p.lo+p.su+p.al+p.ma+p.mk+p.ho;return[p.n,p.kg,p.v,p.cmv,p.film,(rb/p.v)*100,p.iibb,p.com,cm,(cm/p.v)*100,go,p.ro,(p.ro/p.v)*100][i];};const av=gv(a,PSC),bv=gv(b,PSC);if(typeof av==='string')return PSD*(av.localeCompare(bv));return PSD*(bv-av);});
+const tgo_p=Object.values(m.gastos).reduce((a,b)=>a+b,0);
+const tv_p=m.productos.reduce((a,p)=>a+p.v,0);
+const sorted=[...m.productos].sort((a,b)=>{if(PSC<0)return b.v-a.v;const gv=(p,i)=>{const rb=getRB(p),cm=getCM(p),ro=getRO(p,tgo_p,tv_p);return[p.n,p.kg,p.v,p.cmv,p.film,(rb/p.v)*100,p.iibb,p.com,cm,(cm/p.v)*100,ro,(ro/p.v)*100][i];};const av=gv(a,PSC),bv=gv(b,PSC);if(typeof av==='string')return PSD*(av.localeCompare(bv));return PSD*(bv-av);});
 const tv=sorted.reduce((a,p)=>a+p.v,0);
-document.getElementById('pnl-prod-body').innerHTML=sorted.map((p)=>{const rb=p.v-p.cmv-p.film,cm=getCM(p),go=p.lo+p.su+p.al+p.ma+p.mk+p.ho,col=PC[m.productos.indexOf(p)%PC.length];return`<tr><td class="left"><span class="pdot" style="background:${col}"></span>${p.n}</td><td>${p.kg.toLocaleString('es-AR')}</td><td>$${fm(p.v)}</td><td class="neg">-$${fm(p.cmv)}</td><td class="neg">-$${fm(p.film)}</td><td class="${vc(rb)}">${fp(rb,p.v)}</td><td class="neg">-$${fm(p.iibb)}</td><td class="neg">-$${fm(p.com)}</td><td class="${vc(cm)}">$${fm(cm)}</td><td class="pct-c ${vc(cm)}">${fp(cm,p.v)}</td><td class="neg">-$${fm(go)}</td><td class="${vc(p.ro)}">$${fm(p.ro)}</td><td class="pct-c ${vc(p.ro)}">${fp(p.ro,p.v)}</td></tr>`;}).join('')+`<tr class="tot"><td class="left">TOTAL</td><td>${sorted.reduce((a,p)=>a+p.kg,0).toLocaleString('es-AR')}</td><td>$${fm(sorted.reduce((a,p)=>a+p.v,0))}</td><td class="neg">-$${fm(sorted.reduce((a,p)=>a+p.cmv,0))}</td><td class="neg">-$${fm(sorted.reduce((a,p)=>a+p.film,0))}</td><td class="pos">${fp(sorted.reduce((a,p)=>a+p.v-p.cmv-p.film,0),tv)}</td><td class="neg">-$${fm(sorted.reduce((a,p)=>a+p.iibb,0))}</td><td class="neg">-$${fm(sorted.reduce((a,p)=>a+p.com,0))}</td><td class="pos">$${fm(sorted.reduce((a,p)=>a+getCM(p),0))}</td><td class="pct-c pos">${fp(sorted.reduce((a,p)=>a+getCM(p),0),tv)}</td><td class="neg">-$${fm(sorted.reduce((a,p)=>a+p.lo+p.su+p.al+p.ma+p.mk+p.ho,0))}</td><td class="${vc(sorted.reduce((a,p)=>a+p.ro,0))}">$${fm(sorted.reduce((a,p)=>a+p.ro,0))}</td><td class="pct-c">${fp(sorted.reduce((a,p)=>a+p.ro,0),tv)}</td></tr>`;
+document.getElementById('pnl-prod-body').innerHTML=sorted.map((p)=>{const rb=getRB(p),cm=getCM(p),go=getGO(p,tgo_p,tv_p),ro=getRO(p,tgo_p,tv_p),col=PC[m.productos.indexOf(p)%PC.length];return`<tr><td class="left"><span class="pdot" style="background:${col}"></span>${p.n}</td><td>${p.kg.toLocaleString('es-AR')}</td><td>$${fm(p.v)}</td><td class="neg">-$${fm(p.cmv)}</td><td class="neg">-$${fm(p.film)}</td><td class="${vc(rb)}">${fp(rb,p.v)}</td><td class="neg">-$${fm(p.iibb)}</td><td class="neg">-$${fm(p.com)}</td><td class="${vc(cm)}">$${fm(cm)}</td><td class="pct-c ${vc(cm)}">${fp(cm,p.v)}</td><td class="neg">-$${fm(go)}</td><td class="${vc(ro)}">$${fm(ro)}</td><td class="pct-c ${vc(ro)}">${fp(ro,p.v)}</td></tr>`;}).join('')+`<tr class="tot"><td class="left">TOTAL</td><td>${sorted.reduce((a,p)=>a+p.kg,0).toLocaleString('es-AR')}</td><td>$${fm(sorted.reduce((a,p)=>a+p.v,0))}</td><td class="neg">-$${fm(sorted.reduce((a,p)=>a+p.cmv,0))}</td><td class="neg">-$${fm(sorted.reduce((a,p)=>a+p.film,0))}</td><td class="pos">${fp(sorted.reduce((a,p)=>a+p.v-p.cmv-p.film,0),tv)}</td><td class="neg">-$${fm(sorted.reduce((a,p)=>a+p.iibb,0))}</td><td class="neg">-$${fm(sorted.reduce((a,p)=>a+p.com,0))}</td><td class="pos">$${fm(sorted.reduce((a,p)=>a+getCM(p),0))}</td><td class="pct-c pos">${fp(sorted.reduce((a,p)=>a+getCM(p),0),tv)}</td><td class="neg">-$${fm(sorted.reduce((a,p)=>a+getGO(p,tgo_p,tv_p),0))}</td><td class="${vc(sorted.reduce((a,p)=>a+getRO(p,tgo_p,tv_p),0))}">$${fm(sorted.reduce((a,p)=>a+getRO(p,tgo_p,tv_p),0))}</td><td class="pct-c">${fp(sorted.reduce((a,p)=>a+getRO(p,tgo_p,tv_p),0),tv)}</td></tr>`;
 hd.querySelectorAll('th').forEach((th,i)=>{th.classList.remove('sa','sd');if(i===PSC)th.classList.add(PSD>0?'sa':'sd');});}
 function sProd(c){if(PSC===c)PSD*=-1;else{PSC=c;PSD=-1;}renderProdTbl();}
 
 // CLIENTES
 function renderCliCharts(clis,tv){
-  // Chart 1: CM horizontal bar ranking
-  if(CH['cli-cm'])CH['cli-cm'].destroy();
-  const top=clis.slice(0,12);
-  CH['cli-cm']=new Chart(document.getElementById('ch-cli-cm').getContext('2d'),{
-    type:'bar',
-    data:{labels:top.map(c=>c.cli.length>18?c.cli.slice(0,18)+'…':c.cli),
-      datasets:[{data:top.map(c=>{const rb=c.v-c.cmv-c.film;return+(rb-c.iibb-c.com).toFixed(0);}),
-        backgroundColor:top.map((_,i)=>PC[i%PC.length]+'cc'),borderRadius:3,borderWidth:0}]},
-    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' $'+fm(ctx.raw,true)}}},
-      scales:{x:{ticks:{color:'#7a7668',font:{size:9},callback:v=>'$'+fm(v)},grid:{color:'rgba(255,255,255,.05)'}},
-              y:{ticks:{color:'#bbb',font:{size:10}},grid:{display:false}}}}});
-  // Chart 2: Ventas donut
+  // Sort all clients by CM descending
+  const sorted=[...clis].sort((a,b)=>{
+    const cmA=(a.v-a.cmv-a.film)-a.iibb-a.com;
+    const cmB=(b.v-b.cmv-b.film)-b.iibb-b.com;
+    return cmB-cmA;
+  });
+
+  // Chart 1 (LEFT): Ventas donut — top 12
+  const top12=sorted.slice(0,12);
   if(CH['cli-pie'])CH['cli-pie'].destroy();
   CH['cli-pie']=new Chart(document.getElementById('ch-cli-pie').getContext('2d'),{
     type:'doughnut',
-    data:{labels:top.map(c=>c.cli),datasets:[{data:top.map(c=>c.v),
-        backgroundColor:top.map((_,i)=>PC[i%PC.length]+'cc'),borderWidth:0,hoverOffset:5}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'58%',
-      plugins:{legend:{position:'bottom',labels:{color:'#b0aa96',font:{size:9},padding:7}},
-        tooltip:{callbacks:{label:ctx=>` ${ctx.label}: $${fm(ctx.raw)} (${fp(ctx.raw,tv)})`}}}}});}
+    data:{labels:top12.map(c=>c.cli),datasets:[{data:top12.map(c=>c.v),
+        backgroundColor:top12.map((_,i)=>PC[i%PC.length]+'cc'),borderWidth:0,hoverOffset:5}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'55%',
+      plugins:{legend:{position:'bottom',labels:{color:'#b0aa96',font:{size:9},padding:6}},
+        tooltip:{callbacks:{label:ctx=>` $${fm(ctx.raw)} (${fp(ctx.raw,tv)})`}}}}});
+
+  // Chart 2 (RIGHT): CM horizontal bars — ALL clients, with scroll
+  const barH=Math.max(280, sorted.length*28);
+  const canvas=document.getElementById('ch-cli-cm');
+  if(canvas){canvas.style.height=barH+'px';canvas.height=barH;}
+  if(CH['cli-cm'])CH['cli-cm'].destroy();
+  CH['cli-cm']=new Chart(canvas.getContext('2d'),{
+    type:'bar',
+    data:{
+      labels:sorted.map(c=>c.cli.length>22?c.cli.slice(0,22)+'…':c.cli),
+      datasets:[{
+        data:sorted.map(c=>{const rb=c.v-c.cmv-c.film;return+(rb-c.iibb-c.com).toFixed(0);}),
+        backgroundColor:sorted.map((_,i)=>PC[i%PC.length]+'cc'),
+        borderRadius:3,borderWidth:0
+      }]
+    },
+    options:{
+      indexAxis:'y',responsive:false,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' $'+fm(ctx.raw,true)}}},
+      scales:{
+        x:{ticks:{color:'#7a7668',font:{size:9},callback:v=>'$'+fm(v)},grid:{color:'rgba(255,255,255,.05)'}},
+        y:{ticks:{color:'#bbb',font:{size:10}},grid:{display:false}}
+      }
+    }
+  });
+}
 
 function renderCli(){
   const m=AM();if(!m){
@@ -1154,6 +1220,8 @@ function processMonth(){
   const filmKg=usd*tc*(gfilm/1000);
 
   // ── B. PARSE VENTAS ──
+  // Col layout: Cliente|Produto|Kilos|Total c/IVA|Total s/IVA|[CostoTotal]|Vendedor
+  const hasCostoCol=_vd.length>0&&_vd[0].length>=7;
   const pm={};
   let tv=0,ts=0,tk=0;
   _vd.forEach(r=>{
@@ -1162,24 +1230,35 @@ function processMonth(){
     const kg=parseNum(r[2]);
     const tot=parseNum(r[3]);
     const tos=r[4]!==undefined&&String(r[4]).trim()!==''?parseNum(r[4]):tot;
-    const vend=String(r[5]||'WEB').trim();
+    let costoTotal=null,vend;
+    if(hasCostoCol){
+      costoTotal=r[5]!==undefined&&String(r[5]).trim()!==''?parseNum(r[5]):null;
+      vend=String(r[6]||'WEB').trim();
+    } else {
+      vend=String(r[5]||'WEB').trim();
+    }
     if(!prod) return;
-    if(!pm[prod]) pm[prod]={kg:0,v:0,vend,cli};
+    if(!pm[prod]) pm[prod]={kg:0,v:0,costoTotal:0,hasCosto:false,vend,cli};
     pm[prod].kg+=kg; pm[prod].v+=tos;
+    if(costoTotal!==null&&costoTotal>0){pm[prod].costoTotal+=costoTotal;pm[prod].hasCosto=true;}
     tv+=tot; ts+=tos; tk+=kg;
   });
 
-  // ── C. CMV USING THIS MONTH'S PRODUCT COSTS ──
+    // ── C. CMV — use system column if present, else maestro ──
   const tfilm=tk*filmKg;
   const tiibb=ts*0.03;
   let tcmv=0;
   const prodArr=Object.entries(pm).map(([n,d])=>{
-    const mp=_cargaProductos.find(p=>
-      p.nd.trim().toLowerCase()===n.trim().toLowerCase()||
-      p.ns.trim().toLowerCase()===n.trim().toLowerCase()
-    );
-    const costo=mp?mp.c:0;
-    const cv=d.kg*costo;
+    let cv;
+    if(d.hasCosto){
+      cv=d.costoTotal;
+    } else {
+      const mp=_cargaProductos.find(p=>
+        p.nd.trim().toLowerCase()===n.trim().toLowerCase()||
+        p.ns.trim().toLowerCase()===n.trim().toLowerCase()
+      );
+      cv=d.kg*(mp?mp.c:0);
+    }
     const fv=d.kg*filmKg;
     const comRow=_cargaComisiones.find(x=>x.v===d.vend);
     const comPct=comRow?comRow.c/100:0;
@@ -1220,15 +1299,27 @@ function processMonth(){
     const prod=String(r[1]||'').trim();
     const kg=parseNum(r[2]);
     const tos=r[4]!==undefined&&String(r[4]).trim()!==''?parseNum(r[4]):parseNum(r[3]);
-    const vend=String(r[5]||'WEB').trim();
+    let vend,costoLinea=null;
+    if(hasCostoCol){
+      costoLinea=r[5]!==undefined&&String(r[5]).trim()!==''?parseNum(r[5]):null;
+      vend=String(r[6]||'WEB').trim();
+    } else {
+      vend=String(r[5]||'WEB').trim();
+    }
     if(!cli||cli.toUpperCase()==='WEB') return;
     if(!cliMap[cli]) cliMap[cli]={cli,vend,v:0,cmv:0,film:0,iibb:0,com:0,kg:0,productos:{}};
-    const mp=_cargaProductos.find(p=>
-      p.nd.trim().toLowerCase()===prod.trim().toLowerCase()||
-      p.ns.trim().toLowerCase()===prod.trim().toLowerCase()
-    );
-    const costo=mp?mp.c:0;
-    const cv=kg*costo; const fv=kg*filmKg;
+    let cv;
+    if(costoLinea!==null&&costoLinea>0){
+      cv=costoLinea;
+    } else {
+      const mp=_cargaProductos.find(p=>
+        p.nd.trim().toLowerCase()===prod.trim().toLowerCase()||
+        p.ns.trim().toLowerCase()===prod.trim().toLowerCase()
+      );
+      const costo=mp?mp.c:0;
+      cv=kg*costo;
+    }
+    const fv=kg*filmKg;
     const comRow=_cargaComisiones.find(x=>x.v===vend);
     const comPct=comRow?comRow.c/100:0;
     const comAmt=tos*comPct;
