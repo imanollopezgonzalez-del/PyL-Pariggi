@@ -1240,7 +1240,7 @@ function processMonth(){
     if(!prod) return;
     if(!pm[prod]) pm[prod]={kg:0,v:0,costoTotal:0,vend,cli};
     pm[prod].kg+=kg; pm[prod].v+=tos;
-    if(costoTotal!==null&&costoTotal>0) pm[prod].costoTotal+=costoTotal;
+    if(costoTotal!==null&&costoTotal!==0) pm[prod].costoTotal+=costoTotal;
     tv+=tot; ts+=tos; tk+=kg;
   });
 
@@ -1299,7 +1299,7 @@ function processMonth(){
     }
     if(!cli||cli.toUpperCase()==='WEB') return;
     if(!cliMap[cli]) cliMap[cli]={cli,vend,v:0,cmv:0,film:0,iibb:0,com:0,kg:0,productos:{}};
-    const cv=costoLinea||0;
+    const cv=costoLinea!==null?costoLinea:0;
     const fv=kg*filmKg;
     const comRow=_cargaComisiones.find(x=>x.v===vend);
     const comPct=comRow?comRow.c/100:0;
