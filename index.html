@@ -1221,7 +1221,6 @@ function processMonth(){
 
   // ── B. PARSE VENTAS ──
   // Col layout: Cliente|Produto|Kilos|Total c/IVA|Total s/IVA|[CostoTotal]|Vendedor
-  const hasCostoCol=_vd.length>0&&_vd[0].length>=7;
   const pm={};
   let tv=0,ts=0,tk=0;
   _vd.forEach(r=>{
@@ -1230,17 +1229,28 @@ function processMonth(){
     const kg=parseNum(r[2]);
     const tot=parseNum(r[3]);
     const tos=r[4]!==undefined&&String(r[4]).trim()!==''?parseNum(r[4]):tot;
+    // Per-row detection: if col5 is numeric treat as costo, col6 as vendedor
+    // if col5 is a known vendedor name, treat as 6-col format
+    const knownVends=['WEB','Hernan Orellana','Ivan Larez','German Thomas','Cristian Werbach',
+      'Imanol','Carlos Mendoza','Orciani','Joela','Pedro Marin'];
+    const col5=String(r[5]||'').trim();
+    const col6=String(r[6]||'').trim();
+    const rowHasCosto=r.length>=7&&col6!==''&&!isNaN(parseFloat(col5.replace(',','.')));
     let costoTotal=null,vend;
-    if(hasCostoCol){
-      costoTotal=r[5]!==undefined&&String(r[5]).trim()!==''?parseNum(r[5]):null;
-      vend=String(r[6]||'WEB').trim();
+    if(rowHasCosto){
+      costoTotal=col5!==''?parseNum(r[5]):null;
+      vend=col6||'WEB';
     } else {
-      vend=String(r[5]||'WEB').trim();
+      vend=col5||'WEB';
     }
     if(!prod) return;
-    if(!pm[prod]) pm[prod]={kg:0,v:0,costoTotal:0,vend,cli};
+    if(!pm[prod]) pm[prod]={kg:0,v:0,costoTotal:0,com:0,vend,cli};
     pm[prod].kg+=kg; pm[prod].v+=tos;
     if(costoTotal!==null&&costoTotal!==0) pm[prod].costoTotal+=costoTotal;
+    // Calculate commission per line using this row's vendedor
+    const comRowLine=_cargaComisiones.find(x=>x.v===vend);
+    const comPctLine=comRowLine?comRowLine.c/100:0;
+    pm[prod].com+=tos*comPctLine;
     tv+=tot; ts+=tos; tk+=kg;
   });
 
@@ -1251,9 +1261,7 @@ function processMonth(){
   const prodArr=Object.entries(pm).map(([n,d])=>{
     const cv=d.costoTotal||0;
     const fv=d.kg*filmKg;
-    const comRow=_cargaComisiones.find(x=>x.v===d.vend);
-    const comPct=comRow?comRow.c/100:0;
-    const com=d.v*comPct;
+    const com=d.com||0;
     tcmv+=cv;
     return{n,kg:d.kg,v:d.v,cmv:cv,film:fv,iibb:d.v*0.03,com,
            lo:0,su:0,al:0,ma:0,mk:0,ho:0,
@@ -1291,11 +1299,14 @@ function processMonth(){
     const kg=parseNum(r[2]);
     const tos=r[4]!==undefined&&String(r[4]).trim()!==''?parseNum(r[4]):parseNum(r[3]);
     let vend,costoLinea=null;
-    if(hasCostoCol){
-      costoLinea=r[5]!==undefined&&String(r[5]).trim()!==''?parseNum(r[5]):null;
-      vend=String(r[6]||'WEB').trim();
+    const col5c=String(r[5]||'').trim();
+    const col6c=String(r[6]||'').trim();
+    const rowHasCostoC=r.length>=7&&col6c!==''&&!isNaN(parseFloat(col5c.replace(',','.')));
+    if(rowHasCostoC){
+      costoLinea=col5c!==''?parseNum(r[5]):null;
+      vend=col6c||'WEB';
     } else {
-      vend=String(r[5]||'WEB').trim();
+      vend=col5c||'WEB';
     }
     if(!cli||cli.toUpperCase()==='WEB') return;
     if(!cliMap[cli]) cliMap[cli]={cli,vend,v:0,cmv:0,film:0,iibb:0,com:0,kg:0,productos:{}};
