@@ -374,7 +374,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
   <!-- 5. VENTAS -->
   <div class="isec">
     <h3>5 — Descarga de Ventas</h3>
-    <p style="color:var(--text-d);font-size:11px;margin-bottom:12px">Sin encabezado. Columnas: <strong style="color:var(--gold)">Cliente | Producto | Kilos | Total c/IVA | Total s/IVA | Vendedor</strong> — o con costo del sistema: <strong style="color:var(--gold-l)">Cliente | Producto | Kilos | Total c/IVA | Total s/IVA | Costo Total | Vendedor</strong>. Si incluís Costo Total se usa ese CMV en vez del maestro.</p>
+    <p style="color:var(--text-d);font-size:11px;margin-bottom:12px">Sin encabezado. Columnas: <strong style="color:var(--gold)">Cliente | Producto | Kilos | Total c/IVA | Total s/IVA | Costo Total | Vendedor</strong></p>
     <div class="g2">
       <div>
         <div class="uz" onclick="document.getElementById('f-v').click()">
@@ -387,7 +387,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
       <div>
         <div class="tw">
           <label style="font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-d);display:block;margin-bottom:5px">O pegar desde Excel (Tab-separado)</label>
-          <textarea id="paste-v" placeholder="Sin encabezado. Formato 6 col: Cliente&#9;Producto&#9;Kilos&#9;Total c/IVA&#9;Total s/IVA&#9;Vendedor&#10;Formato 7 col (con costo): Cliente&#9;Producto&#9;Kilos&#9;Total c/IVA&#9;Total s/IVA&#9;Costo Total&#9;Vendedor"></textarea>
+          <textarea id="paste-v" placeholder="Cliente&#9;Producto&#9;Kilos&#9;Total c/IVA&#9;Total s/IVA&#9;Costo Total&#9;Vendedor"></textarea>
         </div>
         <button class="btn btn-ghost mt8" onclick="parsePV()">Procesar pegado</button>
       </div>
@@ -1238,9 +1238,9 @@ function processMonth(){
       vend=String(r[5]||'WEB').trim();
     }
     if(!prod) return;
-    if(!pm[prod]) pm[prod]={kg:0,v:0,costoTotal:0,hasCosto:false,vend,cli};
+    if(!pm[prod]) pm[prod]={kg:0,v:0,costoTotal:0,vend,cli};
     pm[prod].kg+=kg; pm[prod].v+=tos;
-    if(costoTotal!==null&&costoTotal>0){pm[prod].costoTotal+=costoTotal;pm[prod].hasCosto=true;}
+    if(costoTotal!==null&&costoTotal>0) pm[prod].costoTotal+=costoTotal;
     tv+=tot; ts+=tos; tk+=kg;
   });
 
@@ -1249,16 +1249,7 @@ function processMonth(){
   const tiibb=ts*0.03;
   let tcmv=0;
   const prodArr=Object.entries(pm).map(([n,d])=>{
-    let cv;
-    if(d.hasCosto){
-      cv=d.costoTotal;
-    } else {
-      const mp=_cargaProductos.find(p=>
-        p.nd.trim().toLowerCase()===n.trim().toLowerCase()||
-        p.ns.trim().toLowerCase()===n.trim().toLowerCase()
-      );
-      cv=d.kg*(mp?mp.c:0);
-    }
+    const cv=d.costoTotal||0;
     const fv=d.kg*filmKg;
     const comRow=_cargaComisiones.find(x=>x.v===d.vend);
     const comPct=comRow?comRow.c/100:0;
@@ -1308,17 +1299,7 @@ function processMonth(){
     }
     if(!cli||cli.toUpperCase()==='WEB') return;
     if(!cliMap[cli]) cliMap[cli]={cli,vend,v:0,cmv:0,film:0,iibb:0,com:0,kg:0,productos:{}};
-    let cv;
-    if(costoLinea!==null&&costoLinea>0){
-      cv=costoLinea;
-    } else {
-      const mp=_cargaProductos.find(p=>
-        p.nd.trim().toLowerCase()===prod.trim().toLowerCase()||
-        p.ns.trim().toLowerCase()===prod.trim().toLowerCase()
-      );
-      const costo=mp?mp.c:0;
-      cv=kg*costo;
-    }
+    const cv=costoLinea||0;
     const fv=kg*filmKg;
     const comRow=_cargaComisiones.find(x=>x.v===vend);
     const comPct=comRow?comRow.c/100:0;
