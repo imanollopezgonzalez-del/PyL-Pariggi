@@ -140,7 +140,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 </head>
 <body>
 <div class="hdr">
-  <div class="logo">Pariggi <span>P&L Dashboard v7</span></div>
+  <div class="logo">Pariggi <span>P&L Dashboard v8</span></div>
   <div class="period-wrap">
     <div class="live-dot"></div>
     <select class="period-sel" id="period-sel" onchange="setMonth(this.value)"></select>
@@ -358,7 +358,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
     <h3>4 — Costos de Productos $/Kg — Mes Seleccionado</h3>
     <p style="color:var(--text-d);font-size:11px;margin-bottom:12px">Costo de producción por kg para este mes.</p>
     <table class="gtbl" id="prods-mes-tbl">
-      <thead><tr><th>SKU</th><th>Nombre Sistema</th><th>Nombre Display</th><th style="text-align:right">$/Kg</th><th></th></tr></thead>
+      <thead><tr><th>SKU</th><th title="Nombre exacto de la descarga de ventas del sistema — para hacer el match">Nombre Sistema ⓘ</th><th title="Como aparece en gráficos y tablas">Nombre Display ⓘ</th><th style="text-align:right">$/Kg</th><th></th></tr></thead>
       <tbody id="prods-mes-body"></tbody>
     </table>
     <button class="btn btn-ghost mt12" onclick="addProductoMes()">+ Agregar producto</button>
@@ -613,10 +613,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
   buildPS();
   renderDash();
   showLoading(false);
-  // Init carga form defaults
-  _cargaSueldos=[...DEFAULT_SUELDOS.map(s=>({...s}))];
-  _cargaComisiones=[...DEFAULT_COMISIONES.map(x=>({...x}))];
-  _cargaProductos=[...DEFAULT_PRODUCTOS.map(p=>({...p}))];
+  // Carga form initialized by onCargaPeriodChange when tab opens
 });
 function showLoading(on){
   let el=document.getElementById('loading-overlay');
@@ -947,10 +944,10 @@ const DEFAULT_PRODUCTOS=[
   {sku:10209,ns:'Ñoquis a la Romana',nd:'Ñoquis a la Romana',c:2778.48},
 ];
 
-// In-memory state for carga form
-let _cargaSueldos=[...DEFAULT_SUELDOS.map(s=>({...s}))];
-let _cargaComisiones=[...DEFAULT_COMISIONES.map(x=>({...x}))];
-let _cargaProductos=[...DEFAULT_PRODUCTOS.map(p=>({...p}))];
+// In-memory state for carga form — populated by onCargaPeriodChange
+let _cargaSueldos=[];
+let _cargaComisiones=[];
+let _cargaProductos=[];
 
 function getCargaKey(){
   const yr=document.getElementById('l-yr').value;
@@ -958,60 +955,117 @@ function getCargaKey(){
   return`${yr}-${String(mo).padStart(2,'0')}`;
 }
 
+function getLastMonth(){
+  // Returns the most recently loaded month object, or null
+  const keys=Object.keys(ST.months).sort();
+  if(!keys.length) return null;
+  return ST.months[keys[keys.length-1]];
+}
+
 function onCargaPeriodChange(){
-  // When period changes, load existing data if available
   const key=getCargaKey();
   const m=ST.months[key];
   if(m){
-    // Load saved values into form
-    if(m.l_tc) document.getElementById('l-tc').value=m.l_tc;
-    if(m.l_usd) document.getElementById('l-usd').value=m.l_usd;
-    if(m.l_gfilm) document.getElementById('l-gfilm').value=m.l_gfilm;
-    _cargaSueldos=m._sueldos?[...m._sueldos.map(s=>({...s}))]:[...DEFAULT_SUELDOS.map(s=>({...s}))];
-    _cargaComisiones=m._comisiones?[...m._comisiones.map(x=>({...x}))]:[...DEFAULT_COMISIONES.map(x=>({...x}))];
-    _cargaProductos=m._productos?[...m._productos.map(p=>({...p}))]:[...DEFAULT_PRODUCTOS.map(p=>({...p}))];
-    document.getElementById('carga-status').textContent='Datos cargados desde '+m.periodo;
+    // Month already loaded — show its saved values
+    document.getElementById('l-tc').value=m.l_tc||'';
+    document.getElementById('l-usd').value=m.l_usd||'';
+    document.getElementById('l-gfilm').value=m.l_gfilm||'';
+    _cargaSueldos=m._sueldos?m._sueldos.map(s=>({...s})):[];
+    _cargaComisiones=m._comisiones?m._comisiones.map(x=>({...x})):[];
+    _cargaProductos=m._productos?m._productos.map(p=>({...p})):[];
+    document.getElementById('carga-status').textContent='Datos guardados para este período';
   } else {
-    document.getElementById('l-tc').value='';
-    document.getElementById('l-usd').value='';
-    document.getElementById('l-gfilm').value='';
-    _cargaSueldos=[...DEFAULT_SUELDOS.map(s=>({...s}))];
-    _cargaComisiones=[...DEFAULT_COMISIONES.map(x=>({...x}))];
-    _cargaProductos=[...DEFAULT_PRODUCTOS.map(p=>({...p}))];
-    document.getElementById('carga-status').textContent='Período nuevo — ingresá los datos';
+    // New month — try to prefill from last loaded month
+    const last=getLastMonth();
+    if(last){
+      document.getElementById('l-tc').value='';
+      document.getElementById('l-usd').value='';
+      document.getElementById('l-gfilm').value=last.l_gfilm||'';
+      // Copy structure from last month but reset monetary values to 0
+      _cargaSueldos=last._sueldos?last._sueldos.map(s=>({...s,m:0})):[];
+      _cargaComisiones=last._comisiones?last._comisiones.map(x=>({...x})):[];
+      _cargaProductos=last._productos?last._productos.map(p=>({...p,c:0})):[];
+      document.getElementById('carga-status').textContent='Período nuevo — estructura copiada del último mes, ingresá los valores';
+    } else {
+      // No history at all — blank slate
+      document.getElementById('l-tc').value='';
+      document.getElementById('l-usd').value='';
+      document.getElementById('l-gfilm').value='';
+      _cargaSueldos=[];
+      _cargaComisiones=[];
+      _cargaProductos=[];
+      document.getElementById('carga-status').textContent='Período nuevo — sin historial previo, ingresá todos los datos';
+    }
   }
+  // Always clear ventas/gastos paste areas
+  document.getElementById('paste-v').value='';
+  document.getElementById('paste-g').value='';
+  document.getElementById('v-prev').innerHTML='';
+  document.getElementById('g-prev').innerHTML='';
+  document.getElementById('v-st').textContent='';
+  _vd=[]; _gd=[];
   renderCargaSubForms();
 }
 
+function iStyle(extra){return`background:transparent;border:none;border-bottom:1px solid var(--bdr2);outline:none;color:var(--text);padding:3px 4px;width:100%;${extra||''}`;}
+
 function renderCargaSubForms(){
-  // Sueldos
+  // ── SUELDOS ──
   const sg=document.getElementById('sueldos-mes-grid');
   if(sg) sg.innerHTML=_cargaSueldos.map((s,i)=>`
     <div class="ff">
-      <label>${s.n}</label>
-      <input type="number" value="${s.m}" onchange="_cargaSueldos[${i}].m=parseNum(this.value)">
+      <label style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+        <input value="${s.n}" style="${iStyle('font-size:11px;font-weight:500;color:var(--text-m)')}"
+          onchange="_cargaSueldos[${i}].n=this.value">
+      </label>
+      <input type="number" value="${s.m||0}" placeholder="0"
+        style="${iStyle('font-family:DM Mono,monospace;font-size:13px')}"
+        onchange="_cargaSueldos[${i}].m=parseNum(this.value)">
+      <button onclick="_cargaSueldos.splice(${i},1);renderCargaSubForms()"
+        style="background:none;border:none;color:var(--red);cursor:pointer;font-size:10px;margin-top:2px;padding:0">✕ quitar</button>
     </div>`).join('');
-  // Comisiones
+
+  // ── COMISIONES ──
   const cb=document.getElementById('comis-mes-body');
   if(cb) cb.innerHTML=_cargaComisiones.map((x,i)=>`<tr>
-    <td><input value="${x.v}" style="background:transparent;border:none;outline:none;color:var(--text);font-family:'DM Sans';width:100%" onchange="_cargaComisiones[${i}].v=this.value"></td>
-    <td style="text-align:right"><input type="number" value="${x.c}" step="0.1" min="0" max="100" style="width:60px;text-align:right;background:transparent;border:none;outline:none;color:var(--text);font-family:'DM Mono'" onchange="_cargaComisiones[${i}].c=+this.value"> %</td>
-    <td><button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:12px" onclick="_cargaComisiones.splice(${i},1);renderCargaSubForms()">✕</button></td>
+    <td><input value="${x.v}" style="${iStyle()}"
+      onchange="_cargaComisiones[${i}].v=this.value"></td>
+    <td style="text-align:right">
+      <input type="number" value="${x.c}" step="0.1" min="0" max="100"
+        style="${iStyle('width:60px;text-align:right;font-family:DM Mono,monospace')}"
+        onchange="_cargaComisiones[${i}].c=+this.value"> %
+    </td>
+    <td><button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:12px"
+      onclick="_cargaComisiones.splice(${i},1);renderCargaSubForms()">✕</button></td>
   </tr>`).join('');
-  // Productos
+
+  // ── PRODUCTOS ──
   const pb=document.getElementById('prods-mes-body');
   if(pb) pb.innerHTML=_cargaProductos.map((p,i)=>`<tr>
-    <td class="dim" style="font-size:10px">${p.sku}</td>
-    <td style="font-size:10px;color:var(--text-d)">${p.ns}</td>
-    <td><input value="${p.nd}" style="background:transparent;border:none;outline:none;color:var(--text);font-family:'DM Sans';width:100%" onchange="_cargaProductos[${i}].nd=this.value"></td>
-    <td style="text-align:right"><input type="number" value="${p.c}" step="0.01" style="width:90px;text-align:right;background:transparent;border:none;outline:none;color:var(--text);font-family:'DM Mono'" onchange="_cargaProductos[${i}].c=+this.value"></td>
-    <td><button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:12px" onclick="_cargaProductos.splice(${i},1);renderCargaSubForms()">✕</button></td>
+    <td><input type="number" value="${p.sku||''}" placeholder="SKU"
+      style="${iStyle('width:80px;font-family:DM Mono,monospace;font-size:11px')}"
+      onchange="_cargaProductos[${i}].sku=+this.value"></td>
+    <td><input value="${p.ns||''}" placeholder="Nombre en sistema (para match con ventas)"
+      style="${iStyle('font-size:11px;color:var(--text-d)')}"
+      onchange="_cargaProductos[${i}].ns=this.value"></td>
+    <td><input value="${p.nd||''}" placeholder="Nombre display (en gráficos)"
+      style="${iStyle()}"
+      onchange="_cargaProductos[${i}].nd=this.value"></td>
+    <td style="text-align:right">
+      <input type="number" value="${p.c||0}" step="0.01" placeholder="0"
+        style="${iStyle('width:90px;text-align:right;font-family:DM Mono,monospace')}"
+        onchange="_cargaProductos[${i}].c=+this.value">
+    </td>
+    <td><button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:12px"
+      onclick="_cargaProductos.splice(${i},1);renderCargaSubForms()">✕</button></td>
   </tr>`).join('');
 }
 
-function addSueldoMes(){_cargaSueldos.push({n:'Nuevo',m:0});renderCargaSubForms();}
-function addComisionMes(){_cargaComisiones.push({v:'Nuevo',c:3});renderCargaSubForms();}
-function addProductoMes(){_cargaProductos.push({sku:0,ns:'',nd:'Nuevo',c:0});renderCargaSubForms();}
+function addSueldoMes(){_cargaSueldos.push({n:'',m:0});renderCargaSubForms();
+  // Focus last name input
+  setTimeout(()=>{const sg=document.getElementById('sueldos-mes-grid');if(sg){const inputs=sg.querySelectorAll('input');if(inputs.length)inputs[inputs.length-2].focus();}},50);}
+function addComisionMes(){_cargaComisiones.push({v:'',c:0});renderCargaSubForms();}
+function addProductoMes(){_cargaProductos.push({sku:0,ns:'',nd:'',c:0});renderCargaSubForms();}
 
 function renderCarga(){
   // Sync period selector with global AMK
@@ -1021,6 +1075,13 @@ function renderCarga(){
     const moEl=document.getElementById('l-mo');
     if(yrEl) yrEl.value=yr;
     if(moEl) moEl.value=parseInt(mo);
+  } else {
+    // Default to current year/month
+    const now=new Date();
+    const yrEl=document.getElementById('l-yr');
+    const moEl=document.getElementById('l-mo');
+    if(yrEl) yrEl.value=now.getFullYear();
+    if(moEl) moEl.value=now.getMonth()+1;
   }
   onCargaPeriodChange();
 }
@@ -1057,7 +1118,11 @@ function parsePG(){
   });
   document.getElementById('g-prev').innerHTML=`<div class="alert agr">${_gd.length} asientos detectados</div>`;
 }
-function clearLoad(){document.getElementById('paste-v').value='';document.getElementById('paste-g').value='';document.getElementById('v-prev').innerHTML='';document.getElementById('g-prev').innerHTML='';document.getElementById('load-res').innerHTML='';_vd=[];_gd=[];}
+function clearLoad(){
+  ['paste-v','paste-g'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['v-prev','g-prev','load-res','v-st'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
+  _vd=[];_gd=[];
+}
 function parseNum(s){
   // Handle Argentine number formats: 1.234.567,89 or 1234567.89
   if(typeof s==='number') return s;
