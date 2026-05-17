@@ -140,7 +140,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 </head>
 <body>
 <div class="hdr">
-  <div class="logo">Pariggi <span>P&L Dashboard v5</span></div>
+  <div class="logo">Pariggi <span>P&L Dashboard v6</span></div>
   <div class="period-wrap">
     <div class="live-dot"></div>
     <select class="period-sel" id="period-sel" onchange="setMonth(this.value)"></select>
@@ -414,6 +414,90 @@ const PC=['#c9a84c','#4caf82','#5e8fc9','#d4853a','#9b6fc9','#e05252','#60c9c2',
 const RC={'Sueldos':'#c9a84c','Alquileres y Servicios':'#5e8fc9','Logística':'#4caf82','Honorarios y Varios':'#9b6fc9','Mantenimiento':'#d4853a','Marketing':'#60c9c2','Gastos Bancarios':'#8ec98a'};
 const MN=['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const MNS=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+
+// ── SKU → RUBRO MAP (from GASTOS_BASE) ──
+// tipo: 'sistema' = from exported gastos | 'fijo' = from maestro sueldos | 'auto' = calculated
+const SKU_RUBRO = {
+  // SUELDOS — TABLA FIJA (taken from maestros, not from sistema)
+  1277:{r:'Sueldos',d:'Sueldo Ivan 25%',t:'fijo'},
+  1624:{r:'Sueldos',d:'Sueldo Luciano 100%',t:'fijo'},
+  1655:{r:'Sueldos',d:'Sueldo Flavia 25%',t:'fijo'},
+  1657:{r:'Sueldos',d:'Sueldo Rodrigo 25%',t:'fijo'},
+  1684:{r:'Sueldos',d:'Sueldo Joela 100%',t:'fijo'},
+  1726:{r:'Sueldos',d:'Sueldo Imanol 25%',t:'fijo'},
+  1744:{r:'Sueldos',d:'Ads American 25%',t:'fijo'},
+  // SUELDOS — SISTEMA
+  1656:{r:'Sueldos',d:'Sueldo German 25%',t:'sistema'},
+  1731:{r:'Sueldos',d:'Sueldo Ezequiel 25%',t:'sistema'},
+  1278:{r:'Sueldos',d:'Cargas Sociales',t:'sistema'},
+  1279:{r:'Sueldos',d:'Monotributo Ivan 25%',t:'sistema'},
+  1280:{r:'Sueldos',d:'Monotributo Ezequiel 25%',t:'sistema'},
+  1627:{r:'Sueldos',d:'Obra Social 25%',t:'sistema'},
+  1669:{r:'Sueldos',d:'Autonomos Joela 100%',t:'sistema'},
+  1728:{r:'Sueldos',d:'Monotributo Flavia 25%',t:'sistema'},
+  1729:{r:'Sueldos',d:'Monotributo Rodrigo 25%',t:'sistema'},
+  // COMISIONES — AUTOMATICO
+  301:{r:'Comisiones',d:'Comisiones Hernan',t:'auto'},
+  1652:{r:'Comisiones',d:'Comisiones Ivan',t:'auto'},
+  1654:{r:'Comisiones',d:'Comisiones Cristian Werbach',t:'auto'},
+  1692:{r:'Comisiones',d:'Comision Imanol',t:'auto'},
+  1700:{r:'Comisiones',d:'Comision Carlos Mendoza',t:'auto'},
+  1714:{r:'Comisiones',d:'Comision Orciani',t:'auto'},
+  1715:{r:'Comisiones',d:'Comisiones Joela',t:'auto'},
+  1727:{r:'Comisiones',d:'Comisiones Pedro Marin',t:'auto'},
+  // LOGÍSTICA
+  1089:{r:'Logística',d:'Combustible Luciano',t:'sistema'},
+  1290:{r:'Logística',d:'Fletes Varios',t:'sistema'},
+  1311:{r:'Logística',d:'Combustible Rodados',t:'sistema'},
+  1317:{r:'Logística',d:'Lubricentro 25%',t:'sistema'},
+  1319:{r:'Logística',d:'Mantenim. Rodados 25%',t:'sistema'},
+  1329:{r:'Logística',d:'Seguros Rodados 25%',t:'sistema'},
+  1461:{r:'Logística',d:'Patentes Rodados 25%',t:'sistema'},
+  1490:{r:'Logística',d:'Multas de Vehículos 25%',t:'sistema'},
+  1675:{r:'Logística',d:'Peajes 25%',t:'sistema'},
+  1742:{r:'Logística',d:'Indumentaria del personal 25%',t:'sistema'},
+  // ALQUILERES Y SERVICIOS
+  209:{r:'Alquileres y Servicios',d:'Alquiler 25%',t:'sistema'},
+  210:{r:'Alquileres y Servicios',d:'Teléfonos Claro',t:'sistema'},
+  1215:{r:'Alquileres y Servicios',d:'Prosegur 25%',t:'sistema'},
+  1307:{r:'Alquileres y Servicios',d:'Gastos de Publicidad',t:'sistema'},
+  1658:{r:'Alquileres y Servicios',d:'Luz-Edenor 25%',t:'sistema'},
+  1659:{r:'Alquileres y Servicios',d:'Gas Natural 25%',t:'sistema'},
+  1660:{r:'Alquileres y Servicios',d:'Agua-Aysa 25%',t:'sistema'},
+  1661:{r:'Alquileres y Servicios',d:'Internet Ivan 25%',t:'sistema'},
+  1662:{r:'Alquileres y Servicios',d:'Internet 25%',t:'sistema'},
+  1664:{r:'Alquileres y Servicios',d:'Sistemas 25%',t:'sistema'},
+  1691:{r:'Alquileres y Servicios',d:'Teléfono Ivan 25%',t:'sistema'},
+  1709:{r:'Alquileres y Servicios',d:'Pago Ondina Servicios',t:'sistema'},
+  1722:{r:'Alquileres y Servicios',d:'Capacitaciones Vistage Luciano',t:'sistema'},
+  1730:{r:'Alquileres y Servicios',d:'Teléfono Rodrigo 25%',t:'sistema'},
+  1736:{r:'Alquileres y Servicios',d:'Vistage Ivan 30%',t:'sistema'},
+  1737:{r:'Alquileres y Servicios',d:'Monday CRM',t:'sistema'},
+  1745:{r:'Alquileres y Servicios',d:'Depósito de Frío Externo 25%',t:'sistema'},
+  // HONORARIOS Y VARIOS
+  1666:{r:'Honorarios y Varios',d:'Honorarios Contador',t:'sistema'},
+  1667:{r:'Honorarios y Varios',d:'Honorarios Abogado',t:'sistema'},
+  1668:{r:'Honorarios y Varios',d:'Servicios Web Jose',t:'sistema'},
+  1678:{r:'Honorarios y Varios',d:'Representacion Luciano',t:'sistema'},
+  // MANTENIMIENTO
+  215:{r:'Mantenimiento',d:'Seguros de Comercio Zurich 25%',t:'sistema'},
+  1209:{r:'Mantenimiento',d:'Equipos de informática',t:'sistema'},
+  1281:{r:'Mantenimiento',d:'Equipos Electrónicos Personal',t:'sistema'},
+  1320:{r:'Mantenimiento',d:'Mantenimiento depósito',t:'sistema'},
+  1463:{r:'Mantenimiento',d:'Gastos de Limpieza 25%',t:'sistema'},
+  1743:{r:'Mantenimiento',d:'Fumigación 25%',t:'sistema'},
+  // MARKETING
+  // (Servicios Web Jose 1668 also appears under Marketing in some months)
+  // GASTOS BANCARIOS
+  1295:{r:'Gastos Bancarios',d:'Comisión bancaria',t:'sistema'},
+  1464:{r:'Gastos Bancarios',d:'Gastos Bancarios',t:'sistema'},
+  // GASTOS VARIOS
+  89:{r:'Honorarios y Varios',d:'Gastos Varios',t:'sistema'},
+  275:{r:'Honorarios y Varios',d:'Atención con Clientes',t:'sistema'},
+  1287:{r:'Mantenimiento',d:'Librería y Papelería 25%',t:'sistema'},
+  1306:{r:'Logística',d:'Gastos de Movilidad',t:'sistema'},
+};
 
 let ST={maestros:{sueldos:[{n:'Luciano',s:6000000,p:100},{n:'Joela',s:3878524,p:100},{n:'Imanol',s:1619889,p:25},{n:'Ivan',s:2433728,p:25},{n:'Rodrigo',s:1246069,p:25},{n:'Flavia',s:864000,p:25}],comisiones:[{v:'WEB',c:0},{v:'Hernan Orellana',c:5},{v:'Ivan Larez',c:3},{v:'German Thomas',c:3},{v:'Cristian Werbach',c:3},{v:'Imanol',c:3},{v:'Carlos Mendoza',c:3},{v:'Orciani',c:3},{v:'Joela',c:3},{v:'Pedro Marin',c:3}],productos:[{sku:6010,ns:'Bucatini',nd:'Bucatini',c:2917.22},{sku:10202,ns:'Cuerdas de guitarra al huevo',nd:'Cuerdas de Guitarra',c:2917.22},{sku:10208,ns:'Ñoquis de Pura Papa',nd:'Ñoquis de Pura Papa',c:2532.28},{sku:10201,ns:'Cables de Teléfono al Huevo',nd:'Raviolon de Espinaca',c:4399.44},{sku:10204,ns:'Sorrentinos de Jamon y Queso',nd:'Sorrentinos de Jamón y Queso',c:5519.28},{sku:70208,ns:'Fusilli Lunghi al huevo',nd:'Fusilli Lunghi al Huevo',c:3241.36},{sku:70205,ns:'Masa de Lasagna',nd:'Masa de Lasagna',c:2917.22},{sku:70206,ns:'Ravioles de Ricota y Hierbas',nd:'Ravioles de Ricota y Hierbas',c:4599.42},{sku:10205,ns:'Sorrentinos de Calabaza',nd:'Sorrentinos de Calabaza',c:4018.70},{sku:20301,ns:'Cables de Teléfono Integrales',nd:'Fusilli Integral',c:3241.36},{sku:10203,ns:'Puntallete 1.5 Kg',nd:'Puntallete 1.5 Kg',c:3748.94},{sku:10207,ns:'Puntalette 0.500 Kg',nd:'Puntalette 0.500 Kg',c:3748.94},{sku:10206,ns:'Ñoquis de Espinaca',nd:'Ñoquis de Espinaca',c:3708.00},{sku:10209,ns:'Ñoquis a la Romana',nd:'Ñoquis a la Romana',c:2778.48}],film:{u:20.5,g:8},rubros:['Sueldos','Alquileres y Servicios','Logística','Honorarios y Varios','Mantenimiento','Marketing','Gastos Bancarios']},months:{}};
 
@@ -736,42 +820,237 @@ document.getElementById('tbl-anual').innerHTML='<thead><tr><th class="left">Conc
 
 // CARGA
 let _vd=[],_gd=[];
-function renderCarga(){document.getElementById('g-fijos').innerHTML='<div class="fgrid">'+ST.maestros.sueldos.filter(s=>s.s>0).map(s=>`<div class="ff"><label>${s.n} — ${s.p}%</label><input type="number" value="${Math.round(s.s*s.p/100)}"></div>`).join('')+'</div><div class="alert ag mt12">Ajustá si hubo cambios en el mes.</div>';}
-function loadVF(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{const wb=XLSX.read(ev.target.result,{type:'binary'});const ws=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(ws,{header:1});_vd=rows.slice(1).filter(r=>r.length>=3);document.getElementById('v-st').textContent=`✓ ${f.name} — ${_vd.length} filas`;document.getElementById('v-prev').innerHTML=`<div class="alert agr">${_vd.length} líneas de venta cargadas</div>`;};r.readAsBinaryString(f);}
-function parsePV(){const raw=document.getElementById('paste-v').value.trim();if(!raw)return;const rows=raw.split('\n').map(r=>r.split('\t'));_vd=rows.slice(1).filter(r=>r.length>=3);document.getElementById('v-prev').innerHTML=`<div class="alert agr">${_vd.length} líneas detectadas</div>`;}
-function parsePG(){const raw=document.getElementById('paste-g').value.trim();if(!raw)return;_gd=raw.split('\n').map(r=>r.split('\t')).filter(r=>r.length>=2);document.getElementById('g-prev').innerHTML=`<div class="alert agr">${_gd.length} asientos detectados</div>`;}
+function renderCarga(){
+  // Sección 4: mostrar sueldos del maestro con posibilidad de ajuste puntual
+  // Si ya existe el mes cargado, tomar el valor guardado; si no, el del maestro
+  const yr=parseInt(document.getElementById('l-yr').value)||new Date().getFullYear();
+  const mo=parseInt(document.getElementById('l-mo').value)||new Date().getMonth()+1;
+  const key=`${yr}-${String(mo).padStart(2,'0')}`;
+  const existingMonth=ST.months[key];
+  const existingSueldos=existingMonth?existingMonth._sueldos_ajustados||{}:{};
+  document.getElementById('g-fijos').innerHTML=
+    '<div class="fgrid">'+
+    ST.maestros.sueldos.map((s,i)=>{
+      const imputado=Math.round(s.s*s.p/100);
+      const val=existingSueldos[s.n]!==undefined?existingSueldos[s.n]:imputado;
+      return`<div class="ff"><label>${s.n} — ${s.p}% Pariggi</label>
+        <input type="number" id="sueldo-${i}" value="${val}" placeholder="${imputado}">
+        <small style="color:var(--text-d);font-size:9px">Base maestro: $${imputado.toLocaleString('es-AR')}</small>
+      </div>`;
+    }).join('')+
+    '</div><div class="alert ag mt12">Modificá solo si hubo cambio puntual en este mes. Si no, se usa el valor del maestro.</div>';
+}
+function loadVF(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{const wb=XLSX.read(ev.target.result,{type:'binary'});const ws=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(ws,{header:1});let startRow=1;
+    const firstCell=String(rows[0]&&rows[0][0]||'').trim().toLowerCase();
+    if(firstCell==='cliente'||firstCell==='client') startRow=1; else startRow=0;
+    _vd=rows.slice(startRow).filter(r=>r.length>=3&&String(r[0]).trim()!='');
+    document.getElementById('v-st').textContent=`✓ ${f.name} — ${_vd.length} filas`;document.getElementById('v-prev').innerHTML=`<div class="alert agr">${_vd.length} líneas de venta cargadas</div>`;};r.readAsBinaryString(f);}
+function parsePV(){
+  const raw=document.getElementById('paste-v').value.trim();
+  if(!raw)return;
+  let rows=raw.split('\n').map(r=>r.split('\t'));
+  // Auto-skip header if first cell looks like a column name
+  const first=String(rows[0][0]||'').trim().toLowerCase();
+  if(first==='cliente'||first==='client'||first==='nombre') rows=rows.slice(1);
+  _vd=rows.filter(r=>r.length>=3&&String(r[0]).trim()!='');
+  document.getElementById('v-prev').innerHTML=`<div class="alert agr">${_vd.length} líneas de venta detectadas</div>`;
+}
+function parsePG(){
+  const raw=document.getElementById('paste-g').value.trim();
+  if(!raw)return;
+  let rows=raw.split('\n').map(r=>r.split('\t'));
+  // Auto-skip header
+  const first=String(rows[0][0]||'').trim().toLowerCase();
+  if(first==='código'||first==='codigo'||first==='cod'||isNaN(parseInt(first))) rows=rows.slice(1);
+  // Normalize: if 4 cols (SKU, CuentaLarga, Nombre, Monto) → keep cols 0,2,3
+  // If 3 cols (SKU, Nombre, Monto) → keep as is
+  _gd=rows.filter(r=>r.length>=3).map(r=>{
+    if(r.length>=4){
+      // 4-col format: col0=SKU, col1=CuentaLarga, col2=Nombre, col3=Monto
+      return[r[0],r[2],r[3]];
+    }
+    return[r[0],r[1],r[2]];
+  });
+  document.getElementById('g-prev').innerHTML=`<div class="alert agr">${_gd.length} asientos detectados</div>`;
+}
 function clearLoad(){document.getElementById('paste-v').value='';document.getElementById('paste-g').value='';document.getElementById('v-prev').innerHTML='';document.getElementById('g-prev').innerHTML='';document.getElementById('load-res').innerHTML='';_vd=[];_gd=[];}
-function processMonth(){const yr=parseInt(document.getElementById('l-yr').value),mo=parseInt(document.getElementById('l-mo').value),tc=parseFloat(document.getElementById('l-tc').value)||1146,usd=parseFloat(document.getElementById('l-usd').value)||20.5,key=`${yr}-${String(mo).padStart(2,'0')}`;
-if(ST.months[key]&&!confirm(`¿Reemplazar ${MN[mo]} ${yr}?`))return;
-if(!_vd.length){document.getElementById('load-res').innerHTML='<div class="alert ar">Cargá datos de ventas primero.</div>';return;}
-const fKg=usd*tc*(ST.maestros.film.g/1000),pm={};let tv=0,ts=0,tk=0;
-_vd.forEach(r=>{const prod=String(r[1]||'').trim(),kg=parseFloat(String(r[2]).replace(',','.'))||0,tot=parseFloat(String(r[3]).replace(/\./g,'').replace(',','.'))||0,tos=parseFloat(String(r[4]).replace(/\./g,'').replace(',','.'))||tot,vend=String(r[5]||'WEB').trim();
-if(!pm[prod])pm[prod]={kg:0,v:0,vend};pm[prod].kg+=kg;pm[prod].v+=tos;tv+=tot;ts+=tos;tk+=kg;});
-const sp=ST.maestros.sueldos.reduce((a,s)=>a+(s.s*s.p/100),0),gs={'Sueldos':sp,'Alquileres y Servicios':0,'Logística':0,'Honorarios y Varios':0,'Mantenimiento':0,'Marketing':0,'Gastos Bancarios':0};
-const tfilm=tk*fKg,tiibb=ts*0.03,tcmv=Object.keys(pm).reduce((a,pn)=>{const mp=ST.maestros.productos.find(p=>p.nd===pn||p.ns===pn);return a+(mp?mp.c*pm[pn].kg:0);},0),tgo=Object.values(gs).reduce((a,b)=>a+b,0),tcm=ts-tcmv-tfilm-tiibb,ro=tcm-tgo;
-// Build clientes from raw ventas data
-const cliMap={};
-_vd.forEach(r=>{
-  const cli=String(r[0]||'').trim();const prod=String(r[1]||'').trim();
-  const kg=parseFloat(String(r[2]).replace(',','.'))||0;
-  const tos=parseFloat(String(r[4]||r[3]).replace(/\./g,'').replace(',','.'))||0;
-  const vend=String(r[5]||'WEB').trim();
-  if(!cli||cli==='WEB') return;
-  if(!cliMap[cli]) cliMap[cli]={cli,vend,v:0,cmv:0,film:0,iibb:0,com:0,productos:{}};
-  const mp=ST.maestros.productos.find(p=>p.nd===prod||p.ns===prod);
-  const c=mp?mp.c:0;const cv=kg*c;const fv=kg*fKg;
-  cliMap[cli].v+=tos;cliMap[cli].cmv+=cv;cliMap[cli].film+=fv;cliMap[cli].iibb+=tos*.03;
-  const comPct=(ST.maestros.comisiones.find(x=>x.v===vend)||{c:0}).c/100;
-  const comAmt=tos*comPct;cliMap[cli].com+=comAmt;
-  if(!cliMap[cli].productos[prod])cliMap[cli].productos[prod]={n:prod,kg:0,v:0,cmv:0,film:0,iibb:0,com:0};
-  cliMap[cli].productos[prod].kg+=kg;cliMap[cli].kg=(cliMap[cli].kg||0)+kg;cliMap[cli].productos[prod].v+=tos;
-  cliMap[cli].productos[prod].cmv+=cv;cliMap[cli].productos[prod].film+=fv;
-  cliMap[cli].productos[prod].iibb+=tos*.03;cliMap[cli].productos[prod].com+=comAmt;
-});
-const cliArr=Object.values(cliMap).map(c=>({...c,productos:Object.values(c.productos)}));
-const tComisiones=cliArr.reduce((a,c)=>a+c.com,0);
-ST.months[key]={periodo:`${MN[mo]} ${yr}`,year:yr,month:mo,tc,usd_film:usd,ventas_netas:ts,cmv:tcmv,film:tfilm,iibb:tiibb,comisiones:tComisiones,contrib_marginal:tcm-tComisiones,gastos:gs,resultado_operativo:ro-tComisiones,productos:Object.entries(pm).map(([n,d])=>{const mp=ST.maestros.productos.find(p=>p.nd===n||p.ns===n),c=mp?mp.c:0,cv=d.kg*c,fv=d.kg*fKg;const comPct=(ST.maestros.comisiones.find(x=>x.v===d.vend)||{c:0}).c/100;const com=d.v*comPct;return{n,kg:d.kg,v:d.v,cmv:cv,film:fv,iibb:d.v*.03,com,lo:0,su:0,al:0,ma:0,mk:0,ho:0,ro:d.v-cv-fv-d.v*.03-com,vend:d.vend};}),clientes:cliArr,gastos_det:[]};
-saveMonth(key);AMK=key;buildPS();document.getElementById('load-res').innerHTML=`<div class="alert agr">✓ ${MN[mo]} ${yr} guardado — Ventas: $${fm(ts)} | Res.Op: $${fm(ro)}</div>`;}
+function parseNum(s){
+  // Handle Argentine number formats: 1.234.567,89 or 1234567.89
+  if(typeof s==='number') return s;
+  s=String(s).trim();
+  // If has comma: could be decimal separator (1234,89) or thousands (1.234,89)
+  if(s.includes(',')&&s.includes('.')){
+    // Both: dots are thousands, comma is decimal → 1.234.567,89
+    return parseFloat(s.replace(/\./g,'').replace(',','.'));
+  } else if(s.includes(',')&&!s.includes('.')){
+    // Only comma: decimal separator → 1234,89
+    return parseFloat(s.replace(',','.'));
+  }
+  return parseFloat(s)||0;
+}
+
+function processMonth(){
+  const yr=parseInt(document.getElementById('l-yr').value);
+  const mo=parseInt(document.getElementById('l-mo').value);
+  const tc=parseFloat(document.getElementById('l-tc').value)||1146;
+  const usd=parseFloat(document.getElementById('l-usd').value)||20.5;
+  const key=`${yr}-${String(mo).padStart(2,'0')}`;
+
+  if(ST.months[key]&&!confirm(`¿Reemplazar ${MN[mo]} ${yr}?`)) return;
+  if(!_vd.length){
+    document.getElementById('load-res').innerHTML='<div class="alert ar">Cargá datos de ventas primero.</div>';
+    return;
+  }
+
+  // ── A. READ SALARY ADJUSTMENTS FROM SECTION 4 ──
+  const sueldosAjustados={};
+  let sueldosTotal=0;
+  ST.maestros.sueldos.forEach((s,i)=>{
+    const inp=document.getElementById(`sueldo-${i}`);
+    const val=inp?parseNum(inp.value):Math.round(s.s*s.p/100);
+    sueldosAjustados[s.n]=val;
+    sueldosTotal+=val;
+  });
+
+  // ── B. PARSE VENTAS ──
+  const filmKg=usd*tc*(ST.maestros.film.g/1000);
+  const pm={};
+  let tv=0,ts=0,tk=0;
+  _vd.forEach(r=>{
+    const cli=String(r[0]||'').trim();
+    const prod=String(r[1]||'').trim();
+    const kg=parseNum(r[2]);
+    const tot=parseNum(r[3]);
+    const tos=r[4]!==undefined&&r[4]!==''?parseNum(r[4]):tot;
+    const vend=String(r[5]||'WEB').trim();
+    if(!prod) return;
+    if(!pm[prod]) pm[prod]={kg:0,v:0,vend,cli};
+    pm[prod].kg+=kg; pm[prod].v+=tos;
+    tv+=tot; ts+=tos; tk+=kg;
+  });
+
+  // ── C. CALCULATE CMV FROM MAESTRO DE PRODUCTOS ──
+  const tfilm=tk*filmKg;
+  const tiibb=ts*0.03;
+  let tcmv=0;
+  const prodArr=Object.entries(pm).map(([n,d])=>{
+    const mp=ST.maestros.productos.find(p=>
+      p.nd.trim().toLowerCase()===n.trim().toLowerCase()||
+      p.ns.trim().toLowerCase()===n.trim().toLowerCase()
+    );
+    const costo=mp?mp.c:0;
+    const cv=d.kg*costo;
+    const fv=d.kg*filmKg;
+    const comPct=(ST.maestros.comisiones.find(x=>x.v===d.vend)||{c:0}).c/100;
+    const com=d.v*comPct;
+    tcmv+=cv;
+    return{n,kg:d.kg,v:d.v,cmv:cv,film:fv,iibb:d.v*0.03,com,
+           lo:0,su:0,al:0,ma:0,mk:0,ho:0,
+           ro:d.v-cv-fv-d.v*0.03-com,vend:d.vend};
+  });
+
+  // ── D. PARSE GASTOS EXPORTADOS ──
+  const gs={
+    'Sueldos':sueldosTotal,
+    'Alquileres y Servicios':0,
+    'Logística':0,
+    'Honorarios y Varios':0,
+    'Mantenimiento':0,
+    'Marketing':0,
+    'Gastos Bancarios':0
+  };
+  const gastos_det=[];
+
+  // Add salary fixed items to gastos_det
+  ST.maestros.sueldos.forEach(s=>{
+    const val=sueldosAjustados[s.n]||0;
+    if(val>0) gastos_det.push({sku:'FIJO',d:s.n+' ('+s.p+'% Pariggi)',r:'Sueldos',m:val});
+  });
+
+  // Parse sistema gastos
+  _gd.forEach(r=>{
+    if(r.length<3) return;
+    const skuRaw=String(r[0]).trim().replace(/^0+/,'');
+    const sku=parseInt(skuRaw)||0;
+    const nombre=String(r[1]).trim();
+    const monto=Math.abs(parseNum(r[2]));
+    if(monto===0) return;
+
+    const cfg=SKU_RUBRO[sku];
+    if(!cfg) return; // skip unknown SKUs (activos, pasivos, etc.)
+    if(cfg.t==='fijo') return; // skip fixed salaries — already counted from maestros
+    if(cfg.t==='auto') return; // skip comisiones — calculated from ventas
+
+    const rubro=cfg.r;
+    if(gs[rubro]!==undefined) gs[rubro]+=monto;
+    gastos_det.push({sku,d:cfg.d||nombre,r:rubro,m:monto});
+  });
+
+  // ── E. BUILD CLIENTES ──
+  const cliMap={};
+  _vd.forEach(r=>{
+    const cli=String(r[0]||'').trim();
+    const prod=String(r[1]||'').trim();
+    const kg=parseNum(r[2]);
+    const tos=r[4]!==undefined&&r[4]!==''?parseNum(r[4]):parseNum(r[3]);
+    const vend=String(r[5]||'WEB').trim();
+    if(!cli||cli.toUpperCase()==='WEB') return;
+    if(!cliMap[cli]) cliMap[cli]={cli,vend,v:0,cmv:0,film:0,iibb:0,com:0,kg:0,productos:{}};
+    const mp=ST.maestros.productos.find(p=>
+      p.nd.trim().toLowerCase()===prod.trim().toLowerCase()||
+      p.ns.trim().toLowerCase()===prod.trim().toLowerCase()
+    );
+    const costo=mp?mp.c:0;
+    const cv=kg*costo;
+    const fv=kg*filmKg;
+    const comPct=(ST.maestros.comisiones.find(x=>x.v===vend)||{c:0}).c/100;
+    const comAmt=tos*comPct;
+    cliMap[cli].v+=tos;
+    cliMap[cli].cmv+=cv;
+    cliMap[cli].film+=fv;
+    cliMap[cli].iibb+=tos*0.03;
+    cliMap[cli].com+=comAmt;
+    cliMap[cli].kg+=kg;
+    if(!cliMap[cli].productos[prod])
+      cliMap[cli].productos[prod]={n:prod,kg:0,v:0,cmv:0,film:0,iibb:0,com:0};
+    cliMap[cli].productos[prod].kg+=kg;
+    cliMap[cli].productos[prod].v+=tos;
+    cliMap[cli].productos[prod].cmv+=cv;
+    cliMap[cli].productos[prod].film+=fv;
+    cliMap[cli].productos[prod].iibb+=tos*0.03;
+    cliMap[cli].productos[prod].com+=comAmt;
+  });
+  const cliArr=Object.values(cliMap).map(x=>({...x,productos:Object.values(x.productos)}));
+
+  // ── F. TOTALS ──
+  const tComisiones=cliArr.reduce((a,x)=>a+x.com,0);
+  const tgo=Object.values(gs).reduce((a,b)=>a+b,0);
+  const tcm=ts-tcmv-tfilm-tiibb-tComisiones;
+  const ro=tcm-tgo;
+
+  // ── G. SAVE MONTH ──
+  ST.months[key]={
+    periodo:`${MN[mo]} ${yr}`,year:yr,month:mo,tc,usd_film:usd,
+    ventas_netas:ts,
+    cmv:tcmv,
+    film:tfilm,
+    iibb:tiibb,
+    comisiones:tComisiones,
+    contrib_marginal:tcm,
+    gastos:gs,
+    resultado_operativo:ro,
+    productos:prodArr,
+    clientes:cliArr,
+    gastos_det,
+    _sueldos_ajustados:sueldosAjustados
+  };
+
+  saveMonth(key);
+  AMK=key;
+  buildPS();
+  document.getElementById('load-res').innerHTML=
+    `<div class="alert agr">✓ ${MN[mo]} ${yr} guardado — Ventas: $${fm(ts)} | CMV: $${fm(tcmv)} | Film: $${fm(tfilm)} | IIBB: $${fm(tiibb)} | Comis.: $${fm(tComisiones)} | Gastos Op.: $${fm(tgo)} | Res.Op: $${fm(ro)}</div>`;
+}
 
 // MAESTROS
 function renderMaestros(){const m=ST.maestros;
