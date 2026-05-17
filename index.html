@@ -140,7 +140,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 </head>
 <body>
 <div class="hdr">
-  <div class="logo">Pariggi <span>P&L Dashboard v6</span></div>
+  <div class="logo">Pariggi <span>P&L Dashboard v7</span></div>
   <div class="period-wrap">
     <div class="live-dot"></div>
     <select class="period-sel" id="period-sel" onchange="setMonth(this.value)"></select>
@@ -154,7 +154,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
   <button class="tb" onclick="goTab('gastos')">Gastos</button>
   <button class="tb" onclick="goTab('anual')">Acumulado Anual</button>
   <button class="tb" onclick="goTab('carga')">Carga de Datos</button>
-  <button class="tb" onclick="goTab('maestros')">Maestros</button>
+  <button class="tb" onclick="goTab('historico')">Histórico</button>
 </div>
 
 <!-- DASHBOARD -->
@@ -301,74 +301,166 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 
 <!-- CARGA -->
 <div class="panel" id="tab-carga">
-  <div class="s-title">Carga de Datos</div>
-  <div class="s-sub">Un período por vez — los datos no se sobreescriben sin confirmación</div>
-  <div class="alert ag">Flujo: 1) Período → 2) Ventas → 3) Gastos exportados → 4) Gastos fijos → 5) Procesar</div>
-  <div class="isec"><h3>1 — Período</h3>
+  <div class="flex-b mb14">
+    <div>
+      <div class="s-title">Carga de Datos</div>
+      <div class="s-sub">Todos los inputs del mes seleccionado — al cambiar el mes arriba se cargan los datos guardados</div>
+    </div>
+    <div id="carga-status" style="font-size:11px;color:var(--text-d)"></div>
+  </div>
+
+  <!-- 1. PERÍODO -->
+  <div class="isec">
+    <h3>1 — Período y Parámetros del Mes</h3>
     <div class="fgrid">
-      <div class="ff"><label>Año</label><select id="l-yr"><option>2026</option><option>2027</option></select></div>
-      <div class="ff"><label>Mes</label><select id="l-mo"><option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option><option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option><option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option></select></div>
-      <div class="ff"><label>TC Oficial $/USD</label><input type="number" id="l-tc" value="1146"></div>
-      <div class="ff"><label>Costo Film USD/Kg</label><input type="number" id="l-usd" value="20.5" step="0.1"></div>
+      <div class="ff"><label>Año</label>
+        <select id="l-yr" onchange="onCargaPeriodChange()">
+          <option>2025</option><option>2026</option><option>2027</option>
+        </select>
+      </div>
+      <div class="ff"><label>Mes</label>
+        <select id="l-mo" onchange="onCargaPeriodChange()">
+          <option value="1">Enero</option><option value="2">Febrero</option>
+          <option value="3">Marzo</option><option value="4">Abril</option>
+          <option value="5">Mayo</option><option value="6">Junio</option>
+          <option value="7">Julio</option><option value="8">Agosto</option>
+          <option value="9">Septiembre</option><option value="10">Octubre</option>
+          <option value="11">Noviembre</option><option value="12">Diciembre</option>
+        </select>
+      </div>
+      <div class="ff"><label>TC Oficial $/USD</label><input type="number" id="l-tc" placeholder="1146"></div>
+      <div class="ff"><label>Film — Costo USD/Kg este mes</label><input type="number" id="l-usd" step="0.1" placeholder="20.5"></div>
+      <div class="ff"><label>Film — Gramos por Kg vendido</label><input type="number" id="l-gfilm" step="0.5" placeholder="8"></div>
     </div>
   </div>
-  <div class="isec"><h3>2 — Descarga de Ventas</h3>
-    <p style="color:var(--text-d);font-size:11px;margin-bottom:12px">Columnas: <strong style="color:var(--gold)">Cliente | Producto | Kilos | Total c/IVA | Total s/IVA | Vendedor</strong></p>
+
+  <!-- 2. SUELDOS DEL MES -->
+  <div class="isec">
+    <h3>2 — Sueldos Imputados Pariggi — Mes Seleccionado</h3>
+    <p style="color:var(--text-d);font-size:11px;margin-bottom:12px">Ingresá el monto real imputado a Pariggi para cada empleado en este mes.</p>
+    <div id="sueldos-mes-grid" class="fgrid"></div>
+    <button class="btn btn-ghost mt12" onclick="addSueldoMes()">+ Agregar empleado</button>
+  </div>
+
+  <!-- 3. COMISIONES DEL MES -->
+  <div class="isec">
+    <h3>3 — Comisiones por Vendedor — Mes Seleccionado</h3>
+    <p style="color:var(--text-d);font-size:11px;margin-bottom:12px">% sobre ventas netas. Modificá solo si cambió respecto al período anterior.</p>
+    <table class="gtbl" id="comis-mes-tbl">
+      <thead><tr><th>Vendedor</th><th style="text-align:right">% Comisión</th><th></th></tr></thead>
+      <tbody id="comis-mes-body"></tbody>
+    </table>
+    <button class="btn btn-ghost mt12" onclick="addComisionMes()">+ Agregar vendedor</button>
+  </div>
+
+  <!-- 4. COSTOS DE PRODUCTOS DEL MES -->
+  <div class="isec">
+    <h3>4 — Costos de Productos $/Kg — Mes Seleccionado</h3>
+    <p style="color:var(--text-d);font-size:11px;margin-bottom:12px">Costo de producción por kg para este mes.</p>
+    <table class="gtbl" id="prods-mes-tbl">
+      <thead><tr><th>SKU</th><th>Nombre Sistema</th><th>Nombre Display</th><th style="text-align:right">$/Kg</th><th></th></tr></thead>
+      <tbody id="prods-mes-body"></tbody>
+    </table>
+    <button class="btn btn-ghost mt12" onclick="addProductoMes()">+ Agregar producto</button>
+  </div>
+
+  <!-- 5. VENTAS -->
+  <div class="isec">
+    <h3>5 — Descarga de Ventas</h3>
+    <p style="color:var(--text-d);font-size:11px;margin-bottom:12px">Sin encabezado. Columnas: <strong style="color:var(--gold)">Cliente | Producto | Kilos | Total c/IVA | Total s/IVA | Vendedor</strong></p>
     <div class="g2">
-      <div><div class="uz" onclick="document.getElementById('f-v').click()"><input type="file" id="f-v" accept=".xlsx,.xls,.csv" onchange="loadVF(event)"><div style="font-size:26px;opacity:.4;margin-bottom:6px">📊</div><div style="font-size:11px;color:var(--text-d)"><strong style="color:var(--text-m)">Subir XLSX/CSV</strong></div></div><div id="v-st" class="mt8 dim" style="font-size:10px"></div></div>
-      <div><div class="tw"><label style="font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-d);display:block;margin-bottom:5px">O pegar desde Excel</label><textarea id="paste-v" placeholder="Cliente&#9;Producto&#9;Kilos&#9;Total&#9;Total s/IVA&#9;Vendedor"></textarea></div><button class="btn btn-ghost mt8" onclick="parsePV()">Procesar pegado</button></div>
+      <div>
+        <div class="uz" onclick="document.getElementById('f-v').click()">
+          <input type="file" id="f-v" accept=".xlsx,.xls,.csv" onchange="loadVF(event)">
+          <div style="font-size:26px;opacity:.4;margin-bottom:6px">📊</div>
+          <div style="font-size:11px;color:var(--text-d)"><strong style="color:var(--text-m)">Subir XLSX/CSV</strong></div>
+        </div>
+        <div id="v-st" class="mt8 dim" style="font-size:10px"></div>
+      </div>
+      <div>
+        <div class="tw">
+          <label style="font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-d);display:block;margin-bottom:5px">O pegar desde Excel (Tab-separado)</label>
+          <textarea id="paste-v" placeholder="Cliente&#9;Producto&#9;Kilos&#9;Total&#9;Total s/IVA&#9;Vendedor"></textarea>
+        </div>
+        <button class="btn btn-ghost mt8" onclick="parsePV()">Procesar pegado</button>
+      </div>
     </div>
     <div id="v-prev" class="mt12"></div>
   </div>
-  <div class="isec"><h3>3 — Gastos Exportados del Sistema</h3>
-    <p style="color:var(--text-d);font-size:11px;margin-bottom:12px">Columnas: <strong style="color:var(--gold)">Código | Cuenta Contable | Monto</strong></p>
+
+  <!-- 6. GASTOS EXPORTADOS -->
+  <div class="isec">
+    <h3>6 — Gastos Exportados del Sistema</h3>
+    <p style="color:var(--text-d);font-size:11px;margin-bottom:12px">Sin encabezado. Columnas: <strong style="color:var(--gold)">Código | Cuenta Contable | Monto</strong></p>
     <div class="tw"><textarea id="paste-g" placeholder="Pegar aquí exportable del sistema..." style="min-height:100px"></textarea></div>
     <button class="btn btn-ghost mt8" onclick="parsePG()">Procesar gastos</button>
     <div id="g-prev" class="mt8"></div>
   </div>
-  <div class="isec"><h3>4 — Gastos Fijos (Maestros)</h3><div id="g-fijos"></div></div>
+
   <div class="flex gap12 mt16">
-    <button class="btn btn-gold" onclick="processMonth()">✓ Procesar y guardar</button>
-    <button class="btn btn-ghost" onclick="clearLoad()">Limpiar</button>
+    <button class="btn btn-gold" onclick="processMonth()">✓ Procesar y guardar mes</button>
+    <button class="btn btn-ghost" onclick="clearLoad()">Limpiar formulario</button>
   </div>
   <div id="load-res" class="mt12"></div>
 </div>
 
-<!-- MAESTROS -->
-<div class="panel" id="tab-maestros">
-  <div class="s-title">Maestros</div>
-  <div class="s-sub">Configuración base del sistema</div>
-  <div class="g2">
-    <div class="isec"><h3>Sueldos — Imputación Pariggi</h3>
-      <table class="gtbl"><thead><tr><th>Empleado</th><th>% Pariggi</th><th style="text-align:right">Sueldo Total $</th><th style="text-align:right">Imputa Pariggi $</th></tr></thead><tbody id="tb-su"></tbody></table>
-      <button class="btn btn-ghost mt12" onclick="addSu()">+ Empleado</button>
-    </div>
-    <div class="isec"><h3>Comisiones por Vendedor</h3>
-      <table class="gtbl"><thead><tr><th>Vendedor</th><th style="text-align:right">Comisión %</th></tr></thead><tbody id="tb-co"></tbody></table>
-      <button class="btn btn-ghost mt12" onclick="addCo()">+ Vendedor</button>
-    </div>
-  </div>
-  <div class="g2 mt16">
-    <div class="isec"><h3>Productos</h3>
-      <table class="gtbl"><thead><tr><th>SKU</th><th>Nombre Sistema</th><th>Nombre Display</th><th style="text-align:right">$/Kg</th></tr></thead><tbody id="tb-pr"></tbody></table>
-      <button class="btn btn-ghost mt12" onclick="addPr()">+ Producto</button>
-    </div>
-    <div>
-      <div class="isec"><h3>Film</h3>
-        <div class="fgrid" style="grid-template-columns:1fr 1fr">
-          <div class="ff"><label>USD/Kg</label><input type="number" id="film-u" value="20.5" step="0.1"></div>
-          <div class="ff"><label>Gramos/Kg vendido</label><input type="number" id="film-g" value="8"></div>
-        </div>
+<!-- HISTÓRICO -->
+<div class="panel" id="tab-historico">
+  <div class="s-title">Histórico de Cargas</div>
+  <div class="s-sub" id="hist-sub">Datos cargados para el mes seleccionado</div>
+  <div id="hist-empty" class="dim" style="text-align:center;padding:40px 0;display:none">No hay datos cargados para este período.</div>
+
+  <div id="hist-content">
+    <div class="g2">
+      <div class="card">
+        <div class="card-t">Parámetros del Mes</div>
+        <table class="tbl" id="hist-params">
+          <tbody></tbody>
+        </table>
       </div>
-      <div class="isec mt16"><h3>Rubros de Gastos</h3><div id="rub-list"></div><button class="btn btn-ghost mt12" onclick="addRu()">+ Rubro</button></div>
+      <div class="card">
+        <div class="card-t">Sueldos Imputados</div>
+        <table class="tbl" id="hist-sueldos">
+          <thead><tr><th class="left">Empleado</th><th>Imputado $</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="g2 mt16">
+      <div class="card">
+        <div class="card-t">Comisiones del Mes</div>
+        <table class="tbl" id="hist-comisiones">
+          <thead><tr><th class="left">Vendedor</th><th>%</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-t">Costos de Productos</div>
+        <table class="tbl" id="hist-productos">
+          <thead><tr><th class="left">Producto</th><th>$/Kg</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card mt16">
+      <div class="card-t">Resumen de Ventas y Gastos</div>
+      <table class="tbl" id="hist-resumen">
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="card mt16">
+      <div class="card-t">Detalle de Gastos Cargados</div>
+      <div class="ovx">
+        <table class="tbl" id="hist-gastos-det">
+          <thead><tr><th class="left" style="width:55px">SKU</th><th class="left">Descripción</th><th class="left">Rubro</th><th>Monto $</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
   </div>
-  <div class="flex gap12 mt16">
-    <button class="btn btn-gold" onclick="saveMaestros()">Guardar cambios</button>
-    <button class="btn btn-ghost" onclick="exportData()">Exportar backup JSON</button>
-  </div>
-  <div id="m-st" class="mt8 dim" style="font-size:10px"></div>
 </div>
+
+
 <script>
 // ── FIREBASE CONFIG ──
 const fbApp = firebase.initializeApp({
@@ -405,7 +497,11 @@ async function saveMaestrosRemote(){
 async function ls(){
   try{
     const mSnap = await DOC_MAESTROS.get();
-    if(mSnap.exists){ const d=mSnap.data(); ST.maestros={...ST.maestros,...d}; }
+    if(mSnap.exists){
+      const d=mSnap.data();
+      // Only merge rubros from Firestore (permanent config)
+      if(d.rubros) ST.maestros.rubros=d.rubros;
+    }
     const mthSnap = await COL_MONTHS.get();
     mthSnap.forEach(doc=>{ ST.months[doc.id]=doc.data(); });
   }catch(e){console.error('Firebase load error:',e);}
@@ -517,6 +613,10 @@ window.addEventListener('DOMContentLoaded',async()=>{
   buildPS();
   renderDash();
   showLoading(false);
+  // Init carga form defaults
+  _cargaSueldos=[...DEFAULT_SUELDOS.map(s=>({...s}))];
+  _cargaComisiones=[...DEFAULT_COMISIONES.map(x=>({...x}))];
+  _cargaProductos=[...DEFAULT_PRODUCTOS.map(p=>({...p}))];
 });
 function showLoading(on){
   let el=document.getElementById('loading-overlay');
@@ -531,8 +631,8 @@ function showLoading(on){
 }
 
 // NAV
-const TABS=['dashboard','productos','clientes','gastos','anual','carga','maestros'];
-function goTab(id){document.querySelectorAll('.tb').forEach((b,i)=>b.classList.toggle('active',TABS[i]===id));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.getElementById('tab-'+id).classList.add('active');const fn={dashboard:renderDash,productos:renderProd,clientes:renderCli,gastos:renderGastos,anual:renderAnual,carga:renderCarga,maestros:renderMaestros};if(fn[id])fn[id]();}
+const TABS=['dashboard','productos','clientes','gastos','anual','carga','historico'];
+function goTab(id){document.querySelectorAll('.tb').forEach((b,i)=>b.classList.toggle('active',TABS[i]===id));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.getElementById('tab-'+id).classList.add('active');const fn={dashboard:renderDash,productos:renderProd,clientes:renderCli,gastos:renderGastos,anual:renderAnual,carga:renderCarga,historico:renderHistorico};if(fn[id])fn[id]();}
 
 // PERIOD
 function buildPS(){const s=document.getElementById('period-sel');s.innerHTML='';Object.keys(ST.months).sort().reverse().forEach(k=>{const o=document.createElement('option');o.value=k;o.text=ST.months[k].periodo;if(k===AMK)o.selected=true;s.appendChild(o);});}
@@ -820,25 +920,109 @@ document.getElementById('tbl-anual').innerHTML='<thead><tr><th class="left">Conc
 
 // CARGA
 let _vd=[],_gd=[];
+// Default starting values for new months
+const DEFAULT_SUELDOS=[
+  {n:'Luciano',m:6000000},{n:'Joela',m:3878524},{n:'Imanol',m:404972},
+  {n:'Ivan',m:608432},{n:'Rodrigo',m:311517},{n:'Flavia',m:216000}
+];
+const DEFAULT_COMISIONES=[
+  {v:'WEB',c:0},{v:'Hernan Orellana',c:5},{v:'Ivan Larez',c:3},
+  {v:'German Thomas',c:3},{v:'Cristian Werbach',c:3},{v:'Imanol',c:3},
+  {v:'Carlos Mendoza',c:3},{v:'Orciani',c:3},{v:'Joela',c:3},{v:'Pedro Marin',c:3}
+];
+const DEFAULT_PRODUCTOS=[
+  {sku:6010,ns:'Bucatini',nd:'Bucatini',c:2917.22},
+  {sku:10202,ns:'Cuerdas de guitarra al huevo',nd:'Cuerdas de Guitarra',c:2917.22},
+  {sku:10208,ns:'Ñoquis de Pura Papa',nd:'Ñoquis de Pura Papa',c:2532.28},
+  {sku:10201,ns:'Cables de Teléfono al Huevo',nd:'Raviolon de Espinaca',c:4399.44},
+  {sku:10204,ns:'Sorrentinos de Jamon y Queso',nd:'Sorrentinos de Jamón y Queso',c:5519.28},
+  {sku:70208,ns:'Fusilli Lunghi al huevo',nd:'Fusilli Lunghi al Huevo',c:3241.36},
+  {sku:70205,ns:'Masa de Lasagna',nd:'Masa de Lasagna',c:2917.22},
+  {sku:70206,ns:'Ravioles de Ricota y Hierbas',nd:'Ravioles de Ricota y Hierbas',c:4599.42},
+  {sku:10205,ns:'Sorrentinos de Calabaza',nd:'Sorrentinos de Calabaza',c:4018.70},
+  {sku:20301,ns:'Cables de Teléfono Integrales',nd:'Fusilli Integral',c:3241.36},
+  {sku:10203,ns:'Puntallete 1.5 Kg',nd:'Puntallete 1.5 Kg',c:3748.94},
+  {sku:10207,ns:'Puntalette 0.500 Kg',nd:'Puntallete 0.500 Kg',c:3748.94},
+  {sku:10206,ns:'Ñoquis de Espinaca',nd:'Ñoquis de Espinaca',c:3708.00},
+  {sku:10209,ns:'Ñoquis a la Romana',nd:'Ñoquis a la Romana',c:2778.48},
+];
+
+// In-memory state for carga form
+let _cargaSueldos=[...DEFAULT_SUELDOS.map(s=>({...s}))];
+let _cargaComisiones=[...DEFAULT_COMISIONES.map(x=>({...x}))];
+let _cargaProductos=[...DEFAULT_PRODUCTOS.map(p=>({...p}))];
+
+function getCargaKey(){
+  const yr=document.getElementById('l-yr').value;
+  const mo=document.getElementById('l-mo').value;
+  return`${yr}-${String(mo).padStart(2,'0')}`;
+}
+
+function onCargaPeriodChange(){
+  // When period changes, load existing data if available
+  const key=getCargaKey();
+  const m=ST.months[key];
+  if(m){
+    // Load saved values into form
+    if(m.l_tc) document.getElementById('l-tc').value=m.l_tc;
+    if(m.l_usd) document.getElementById('l-usd').value=m.l_usd;
+    if(m.l_gfilm) document.getElementById('l-gfilm').value=m.l_gfilm;
+    _cargaSueldos=m._sueldos?[...m._sueldos.map(s=>({...s}))]:[...DEFAULT_SUELDOS.map(s=>({...s}))];
+    _cargaComisiones=m._comisiones?[...m._comisiones.map(x=>({...x}))]:[...DEFAULT_COMISIONES.map(x=>({...x}))];
+    _cargaProductos=m._productos?[...m._productos.map(p=>({...p}))]:[...DEFAULT_PRODUCTOS.map(p=>({...p}))];
+    document.getElementById('carga-status').textContent='Datos cargados desde '+m.periodo;
+  } else {
+    document.getElementById('l-tc').value='';
+    document.getElementById('l-usd').value='';
+    document.getElementById('l-gfilm').value='';
+    _cargaSueldos=[...DEFAULT_SUELDOS.map(s=>({...s}))];
+    _cargaComisiones=[...DEFAULT_COMISIONES.map(x=>({...x}))];
+    _cargaProductos=[...DEFAULT_PRODUCTOS.map(p=>({...p}))];
+    document.getElementById('carga-status').textContent='Período nuevo — ingresá los datos';
+  }
+  renderCargaSubForms();
+}
+
+function renderCargaSubForms(){
+  // Sueldos
+  const sg=document.getElementById('sueldos-mes-grid');
+  if(sg) sg.innerHTML=_cargaSueldos.map((s,i)=>`
+    <div class="ff">
+      <label>${s.n}</label>
+      <input type="number" value="${s.m}" onchange="_cargaSueldos[${i}].m=parseNum(this.value)">
+    </div>`).join('');
+  // Comisiones
+  const cb=document.getElementById('comis-mes-body');
+  if(cb) cb.innerHTML=_cargaComisiones.map((x,i)=>`<tr>
+    <td><input value="${x.v}" style="background:transparent;border:none;outline:none;color:var(--text);font-family:'DM Sans';width:100%" onchange="_cargaComisiones[${i}].v=this.value"></td>
+    <td style="text-align:right"><input type="number" value="${x.c}" step="0.1" min="0" max="100" style="width:60px;text-align:right;background:transparent;border:none;outline:none;color:var(--text);font-family:'DM Mono'" onchange="_cargaComisiones[${i}].c=+this.value"> %</td>
+    <td><button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:12px" onclick="_cargaComisiones.splice(${i},1);renderCargaSubForms()">✕</button></td>
+  </tr>`).join('');
+  // Productos
+  const pb=document.getElementById('prods-mes-body');
+  if(pb) pb.innerHTML=_cargaProductos.map((p,i)=>`<tr>
+    <td class="dim" style="font-size:10px">${p.sku}</td>
+    <td style="font-size:10px;color:var(--text-d)">${p.ns}</td>
+    <td><input value="${p.nd}" style="background:transparent;border:none;outline:none;color:var(--text);font-family:'DM Sans';width:100%" onchange="_cargaProductos[${i}].nd=this.value"></td>
+    <td style="text-align:right"><input type="number" value="${p.c}" step="0.01" style="width:90px;text-align:right;background:transparent;border:none;outline:none;color:var(--text);font-family:'DM Mono'" onchange="_cargaProductos[${i}].c=+this.value"></td>
+    <td><button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:12px" onclick="_cargaProductos.splice(${i},1);renderCargaSubForms()">✕</button></td>
+  </tr>`).join('');
+}
+
+function addSueldoMes(){_cargaSueldos.push({n:'Nuevo',m:0});renderCargaSubForms();}
+function addComisionMes(){_cargaComisiones.push({v:'Nuevo',c:3});renderCargaSubForms();}
+function addProductoMes(){_cargaProductos.push({sku:0,ns:'',nd:'Nuevo',c:0});renderCargaSubForms();}
+
 function renderCarga(){
-  // Sección 4: mostrar sueldos del maestro con posibilidad de ajuste puntual
-  // Si ya existe el mes cargado, tomar el valor guardado; si no, el del maestro
-  const yr=parseInt(document.getElementById('l-yr').value)||new Date().getFullYear();
-  const mo=parseInt(document.getElementById('l-mo').value)||new Date().getMonth()+1;
-  const key=`${yr}-${String(mo).padStart(2,'0')}`;
-  const existingMonth=ST.months[key];
-  const existingSueldos=existingMonth?existingMonth._sueldos_ajustados||{}:{};
-  document.getElementById('g-fijos').innerHTML=
-    '<div class="fgrid">'+
-    ST.maestros.sueldos.map((s,i)=>{
-      const imputado=Math.round(s.s*s.p/100);
-      const val=existingSueldos[s.n]!==undefined?existingSueldos[s.n]:imputado;
-      return`<div class="ff"><label>${s.n} — ${s.p}% Pariggi</label>
-        <input type="number" id="sueldo-${i}" value="${val}" placeholder="${imputado}">
-        <small style="color:var(--text-d);font-size:9px">Base maestro: $${imputado.toLocaleString('es-AR')}</small>
-      </div>`;
-    }).join('')+
-    '</div><div class="alert ag mt12">Modificá solo si hubo cambio puntual en este mes. Si no, se usa el valor del maestro.</div>';
+  // Sync period selector with global AMK
+  if(AMK){
+    const [yr,mo]=AMK.split('-');
+    const yrEl=document.getElementById('l-yr');
+    const moEl=document.getElementById('l-mo');
+    if(yrEl) yrEl.value=yr;
+    if(moEl) moEl.value=parseInt(mo);
+  }
+  onCargaPeriodChange();
 }
 function loadVF(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{const wb=XLSX.read(ev.target.result,{type:'binary'});const ws=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(ws,{header:1});let startRow=1;
     const firstCell=String(rows[0]&&rows[0][0]||'').trim().toLowerCase();
@@ -892,28 +1076,19 @@ function parseNum(s){
 function processMonth(){
   const yr=parseInt(document.getElementById('l-yr').value);
   const mo=parseInt(document.getElementById('l-mo').value);
-  const tc=parseFloat(document.getElementById('l-tc').value)||1146;
-  const usd=parseFloat(document.getElementById('l-usd').value)||20.5;
+  const tc=parseFloat(document.getElementById('l-tc').value);
+  const usd=parseFloat(document.getElementById('l-usd').value);
+  const gfilm=parseFloat(document.getElementById('l-gfilm').value)||8;
   const key=`${yr}-${String(mo).padStart(2,'0')}`;
 
+  if(!tc||!usd){document.getElementById('load-res').innerHTML='<div class="alert ar">Completá TC y costo film del mes.</div>';return;}
   if(ST.months[key]&&!confirm(`¿Reemplazar ${MN[mo]} ${yr}?`)) return;
-  if(!_vd.length){
-    document.getElementById('load-res').innerHTML='<div class="alert ar">Cargá datos de ventas primero.</div>';
-    return;
-  }
+  if(!_vd.length){document.getElementById('load-res').innerHTML='<div class="alert ar">Cargá datos de ventas primero.</div>';return;}
 
-  // ── A. READ SALARY ADJUSTMENTS FROM SECTION 4 ──
-  const sueldosAjustados={};
-  let sueldosTotal=0;
-  ST.maestros.sueldos.forEach((s,i)=>{
-    const inp=document.getElementById(`sueldo-${i}`);
-    const val=inp?parseNum(inp.value):Math.round(s.s*s.p/100);
-    sueldosAjustados[s.n]=val;
-    sueldosTotal+=val;
-  });
+  // ── A. FILM ──
+  const filmKg=usd*tc*(gfilm/1000);
 
   // ── B. PARSE VENTAS ──
-  const filmKg=usd*tc*(ST.maestros.film.g/1000);
   const pm={};
   let tv=0,ts=0,tk=0;
   _vd.forEach(r=>{
@@ -921,7 +1096,7 @@ function processMonth(){
     const prod=String(r[1]||'').trim();
     const kg=parseNum(r[2]);
     const tot=parseNum(r[3]);
-    const tos=r[4]!==undefined&&r[4]!==''?parseNum(r[4]):tot;
+    const tos=r[4]!==undefined&&String(r[4]).trim()!==''?parseNum(r[4]):tot;
     const vend=String(r[5]||'WEB').trim();
     if(!prod) return;
     if(!pm[prod]) pm[prod]={kg:0,v:0,vend,cli};
@@ -929,19 +1104,20 @@ function processMonth(){
     tv+=tot; ts+=tos; tk+=kg;
   });
 
-  // ── C. CALCULATE CMV FROM MAESTRO DE PRODUCTOS ──
+  // ── C. CMV USING THIS MONTH'S PRODUCT COSTS ──
   const tfilm=tk*filmKg;
   const tiibb=ts*0.03;
   let tcmv=0;
   const prodArr=Object.entries(pm).map(([n,d])=>{
-    const mp=ST.maestros.productos.find(p=>
+    const mp=_cargaProductos.find(p=>
       p.nd.trim().toLowerCase()===n.trim().toLowerCase()||
       p.ns.trim().toLowerCase()===n.trim().toLowerCase()
     );
     const costo=mp?mp.c:0;
     const cv=d.kg*costo;
     const fv=d.kg*filmKg;
-    const comPct=(ST.maestros.comisiones.find(x=>x.v===d.vend)||{c:0}).c/100;
+    const comRow=_cargaComisiones.find(x=>x.v===d.vend);
+    const comPct=comRow?comRow.c/100:0;
     const com=d.v*comPct;
     tcmv+=cv;
     return{n,kg:d.kg,v:d.v,cmv:cv,film:fv,iibb:d.v*0.03,com,
@@ -949,68 +1125,50 @@ function processMonth(){
            ro:d.v-cv-fv-d.v*0.03-com,vend:d.vend};
   });
 
-  // ── D. PARSE GASTOS EXPORTADOS ──
+  // ── D. GASTOS FROM EXPORTED SYSTEM ──
   const gs={
-    'Sueldos':sueldosTotal,
-    'Alquileres y Servicios':0,
-    'Logística':0,
-    'Honorarios y Varios':0,
-    'Mantenimiento':0,
-    'Marketing':0,
-    'Gastos Bancarios':0
+    'Sueldos':_cargaSueldos.reduce((a,s)=>a+(s.m||0),0),
+    'Alquileres y Servicios':0,'Logística':0,
+    'Honorarios y Varios':0,'Mantenimiento':0,
+    'Marketing':0,'Gastos Bancarios':0
   };
-  const gastos_det=[];
+  const gastos_det=_cargaSueldos.filter(s=>s.m>0).map(s=>({sku:'FIJO',d:s.n,r:'Sueldos',m:s.m}));
 
-  // Add salary fixed items to gastos_det
-  ST.maestros.sueldos.forEach(s=>{
-    const val=sueldosAjustados[s.n]||0;
-    if(val>0) gastos_det.push({sku:'FIJO',d:s.n+' ('+s.p+'% Pariggi)',r:'Sueldos',m:val});
-  });
-
-  // Parse sistema gastos
   _gd.forEach(r=>{
     if(r.length<3) return;
-    const skuRaw=String(r[0]).trim().replace(/^0+/,'');
-    const sku=parseInt(skuRaw)||0;
+    const sku=parseInt(String(r[0]).trim().replace(/^0+/,''))||0;
     const nombre=String(r[1]).trim();
     const monto=Math.abs(parseNum(r[2]));
     if(monto===0) return;
-
     const cfg=SKU_RUBRO[sku];
-    if(!cfg) return; // skip unknown SKUs (activos, pasivos, etc.)
-    if(cfg.t==='fijo') return; // skip fixed salaries — already counted from maestros
-    if(cfg.t==='auto') return; // skip comisiones — calculated from ventas
-
+    if(!cfg) return;
+    if(cfg.t==='fijo'||cfg.t==='auto') return;
     const rubro=cfg.r;
     if(gs[rubro]!==undefined) gs[rubro]+=monto;
     gastos_det.push({sku,d:cfg.d||nombre,r:rubro,m:monto});
   });
 
-  // ── E. BUILD CLIENTES ──
+  // ── E. CLIENTES ──
   const cliMap={};
   _vd.forEach(r=>{
     const cli=String(r[0]||'').trim();
     const prod=String(r[1]||'').trim();
     const kg=parseNum(r[2]);
-    const tos=r[4]!==undefined&&r[4]!==''?parseNum(r[4]):parseNum(r[3]);
+    const tos=r[4]!==undefined&&String(r[4]).trim()!==''?parseNum(r[4]):parseNum(r[3]);
     const vend=String(r[5]||'WEB').trim();
     if(!cli||cli.toUpperCase()==='WEB') return;
     if(!cliMap[cli]) cliMap[cli]={cli,vend,v:0,cmv:0,film:0,iibb:0,com:0,kg:0,productos:{}};
-    const mp=ST.maestros.productos.find(p=>
+    const mp=_cargaProductos.find(p=>
       p.nd.trim().toLowerCase()===prod.trim().toLowerCase()||
       p.ns.trim().toLowerCase()===prod.trim().toLowerCase()
     );
     const costo=mp?mp.c:0;
-    const cv=kg*costo;
-    const fv=kg*filmKg;
-    const comPct=(ST.maestros.comisiones.find(x=>x.v===vend)||{c:0}).c/100;
+    const cv=kg*costo; const fv=kg*filmKg;
+    const comRow=_cargaComisiones.find(x=>x.v===vend);
+    const comPct=comRow?comRow.c/100:0;
     const comAmt=tos*comPct;
-    cliMap[cli].v+=tos;
-    cliMap[cli].cmv+=cv;
-    cliMap[cli].film+=fv;
-    cliMap[cli].iibb+=tos*0.03;
-    cliMap[cli].com+=comAmt;
-    cliMap[cli].kg+=kg;
+    cliMap[cli].v+=tos; cliMap[cli].cmv+=cv; cliMap[cli].film+=fv;
+    cliMap[cli].iibb+=tos*0.03; cliMap[cli].com+=comAmt; cliMap[cli].kg+=kg;
     if(!cliMap[cli].productos[prod])
       cliMap[cli].productos[prod]={n:prod,kg:0,v:0,cmv:0,film:0,iibb:0,com:0};
     cliMap[cli].productos[prod].kg+=kg;
@@ -1028,43 +1186,108 @@ function processMonth(){
   const tcm=ts-tcmv-tfilm-tiibb-tComisiones;
   const ro=tcm-tgo;
 
-  // ── G. SAVE MONTH ──
+  // ── G. SAVE ──
   ST.months[key]={
-    periodo:`${MN[mo]} ${yr}`,year:yr,month:mo,tc,usd_film:usd,
-    ventas_netas:ts,
-    cmv:tcmv,
-    film:tfilm,
-    iibb:tiibb,
-    comisiones:tComisiones,
+    periodo:`${MN[mo]} ${yr}`,year:yr,month:mo,
+    l_tc:tc,l_usd:usd,l_gfilm:gfilm,
+    tc,usd_film:usd,
+    ventas_netas:ts, cmv:tcmv, film:tfilm,
+    iibb:tiibb, comisiones:tComisiones,
     contrib_marginal:tcm,
     gastos:gs,
     resultado_operativo:ro,
     productos:prodArr,
     clientes:cliArr,
     gastos_det,
-    _sueldos_ajustados:sueldosAjustados
+    _sueldos:[..._cargaSueldos],
+    _comisiones:[..._cargaComisiones],
+    _productos:[..._cargaProductos],
   };
 
   saveMonth(key);
   AMK=key;
   buildPS();
+  document.getElementById('carga-status').textContent='✓ Guardado correctamente';
   document.getElementById('load-res').innerHTML=
-    `<div class="alert agr">✓ ${MN[mo]} ${yr} guardado — Ventas: $${fm(ts)} | CMV: $${fm(tcmv)} | Film: $${fm(tfilm)} | IIBB: $${fm(tiibb)} | Comis.: $${fm(tComisiones)} | Gastos Op.: $${fm(tgo)} | Res.Op: $${fm(ro)}</div>`;
+    `<div class="alert agr">✓ ${MN[mo]} ${yr} guardado<br>
+    Ventas: $${fm(ts)} | CMV: $${fm(tcmv)} | Film: $${fm(tfilm)} |
+    IIBB: $${fm(tiibb)} | Comis.: $${fm(tComisiones)} |
+    Gastos Op.: $${fm(tgo)} | <strong>Res.Op: $${fm(ro)}</strong></div>`;
 }
 
+
 // MAESTROS
-function renderMaestros(){const m=ST.maestros;
-document.getElementById('tb-su').innerHTML=m.sueldos.map((s,i)=>`<tr><td><input value="${s.n}" onchange="ST.maestros.sueldos[${i}].n=this.value"></td><td><input type="number" value="${s.p}" style="width:52px" onchange="ST.maestros.sueldos[${i}].p=+this.value;uSI(${i})"></td><td style="text-align:right"><input type="number" value="${s.s}" style="text-align:right" onchange="ST.maestros.sueldos[${i}].s=+this.value;uSI(${i})"></td><td style="text-align:right;color:var(--text-d);font-family:'DM Mono';font-size:11px" id="si-${i}">$${fm(s.s*s.p/100)}</td></tr>`).join('');
-document.getElementById('tb-co').innerHTML=m.comisiones.map((c,i)=>`<tr><td><input value="${c.v}" onchange="ST.maestros.comisiones[${i}].v=this.value"></td><td style="text-align:right"><input type="number" value="${c.c}" step="0.1" min="0" max="100" style="width:60px;text-align:right" onchange="ST.maestros.comisiones[${i}].c=+this.value"> %</td></tr>`).join('');
-document.getElementById('tb-pr').innerHTML=m.productos.map((p,i)=>`<tr><td class="mono dim" style="font-size:10px">${p.sku}</td><td style="font-size:10px;color:var(--text-d)">${p.ns}</td><td><input value="${p.nd}" onchange="ST.maestros.productos[${i}].nd=this.value"></td><td style="text-align:right"><input type="number" value="${p.c}" step="0.01" style="text-align:right" onchange="ST.maestros.productos[${i}].c=+this.value"></td></tr>`).join('');
-document.getElementById('film-u').value=m.film.u;document.getElementById('film-g').value=m.film.g;
-document.getElementById('rub-list').innerHTML=m.rubros.map((r,i)=>`<div class="flex gap8" style="margin-bottom:8px"><div style="display:flex;align-items:center;gap:7px;flex:1;background:var(--surf2);border:1px solid var(--bdr2);border-radius:var(--r);padding:6px 10px"><div style="width:9px;height:9px;border-radius:50%;background:${RC[r]||'var(--text-d)'};flex-shrink:0"></div><input value="${r}" style="background:transparent;border:none;outline:none;color:var(--text);font-family:'DM Sans';font-size:12px;flex:1" onchange="ST.maestros.rubros[${i}]=this.value"></div><button class="btn btn-red" style="padding:5px 9px;font-size:10px" onclick="delRu(${i})">✕</button></div>`).join('');}
-function uSI(i){const s=ST.maestros.sueldos[i],el=document.getElementById('si-'+i);if(el)el.textContent='$'+fm(s.s*s.p/100);}
-function addSu(){ST.maestros.sueldos.push({n:'Nuevo',s:0,p:25});renderMaestros();}
-function addCo(){ST.maestros.comisiones.push({v:'Nuevo',c:3});renderMaestros();}
-function addPr(){ST.maestros.productos.push({sku:0,ns:'',nd:'Nuevo',c:0});renderMaestros();}
-function addRu(){ST.maestros.rubros.push('Nuevo Rubro');renderMaestros();}
-function delRu(i){ST.maestros.rubros.splice(i,1);renderMaestros();}
-function saveMaestros(){ST.maestros.film.u=parseFloat(document.getElementById('film-u').value)||20.5;ST.maestros.film.g=parseFloat(document.getElementById('film-g').value)||8;saveMaestrosRemote();document.getElementById('m-st').textContent='✓ Guardado — '+new Date().toLocaleTimeString('es-AR');}
+
+function renderHistorico(){
+  const m=AM();
+  document.getElementById('hist-sub').textContent=
+    m?`Datos cargados para ${m.periodo}`:'Seleccioná un mes cargado';
+  const empty=document.getElementById('hist-empty');
+  const content=document.getElementById('hist-content');
+  if(!m){
+    if(empty)empty.style.display='block';
+    if(content)content.style.display='none';
+    return;
+  }
+  if(empty)empty.style.display='none';
+  if(content)content.style.display='block';
+
+  // Params
+  const pt=document.getElementById('hist-params').querySelector('tbody');
+  if(pt) pt.innerHTML=[
+    ['TC Oficial $/USD', m.l_tc||m.tc||'—'],
+    ['Film USD/Kg', m.l_usd||m.usd_film||'—'],
+    ['Film g/Kg vendido', m.l_gfilm||'—'],
+    ['Ventas Netas', '$'+fm(m.ventas_netas,true)],
+    ['CMV Total', '$'+fm(m.cmv,true)],
+    ['Film Total', '$'+fm(m.film,true)],
+    ['IIBB', '$'+fm(m.iibb,true)],
+    ['Comisiones', '$'+fm(m.comisiones,true)],
+    ['Contrib. Marginal', '$'+fm(m.contrib_marginal,true)],
+    ['Total Gastos Op.', '$'+fm(Object.values(m.gastos||{}).reduce((a,b)=>a+b,0),true)],
+    ['Resultado Operativo', '$'+fm(m.resultado_operativo,true)],
+  ].map(([k,v])=>`<tr><td class="left" style="color:var(--text-m)">${k}</td><td class="pos">${v}</td></tr>`).join('');
+
+  // Sueldos
+  const st=document.getElementById('hist-sueldos').querySelector('tbody');
+  const sueldos=m._sueldos||[];
+  if(st) st.innerHTML=sueldos.length
+    ?sueldos.map(s=>`<tr><td class="left">${s.n}</td><td>$${fm(s.m,true)}</td></tr>`).join('')
+    :'<tr><td colspan="2" class="dim">Sin datos</td></tr>';
+
+  // Comisiones
+  const ct=document.getElementById('hist-comisiones').querySelector('tbody');
+  const comis=m._comisiones||[];
+  if(ct) ct.innerHTML=comis.length
+    ?comis.map(x=>`<tr><td class="left">${x.v}</td><td style="text-align:right">${x.c} %</td></tr>`).join('')
+    :'<tr><td colspan="2" class="dim">Sin datos</td></tr>';
+
+  // Productos
+  const prt=document.getElementById('hist-productos').querySelector('tbody');
+  const prods=m._productos||[];
+  if(prt) prt.innerHTML=prods.length
+    ?prods.map(p=>`<tr><td class="left">${p.nd}</td><td style="text-align:right">$${p.c.toLocaleString('es-AR')}/kg</td></tr>`).join('')
+    :'<tr><td colspan="2" class="dim">Sin datos</td></tr>';
+
+  // Resumen gastos por rubro
+  const rt=document.getElementById('hist-resumen').querySelector('tbody');
+  if(rt&&m.gastos) rt.innerHTML=Object.entries(m.gastos)
+    .map(([k,v])=>`<tr><td class="left">${k}</td><td class="${vc(v)}">$${fm(v,true)}</td></tr>`).join('');
+
+  // Gastos detalle
+  const gdt=document.getElementById('hist-gastos-det').querySelector('tbody');
+  const gd=(m.gastos_det||[]).sort((a,b)=>b.m-a.m);
+  if(gdt) gdt.innerHTML=gd.length
+    ?gd.map(g=>{
+      const col=RC[g.r]||'#7a7668';
+      return`<tr>
+        <td class="left dim" style="font-size:10px">${g.sku}</td>
+        <td class="left">${g.d}</td>
+        <td class="left"><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:9px;font-weight:600;background:${col}22;color:${col}">${g.r}</span></td>
+        <td>$${fm(g.m,true)}</td>
+      </tr>`;}).join('')
+    :'<tr><td colspan="4" class="dim" style="padding:20px;text-align:center">Sin datos de gastos</td></tr>';
+}
+
 function exportData(){const b=new Blob([JSON.stringify(ST,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='pariggi_pnl_backup.json';a.click();}
 </script></body></html>
