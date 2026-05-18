@@ -118,6 +118,9 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 .gtbl tr:hover td{background:var(--surf2);}
 .gtbl input{background:transparent;border:none;outline:none;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;width:100%;padding:2px 4px;}
 .gtbl input:focus{background:var(--surf3);border-radius:4px;}
+.gtbl select{background:var(--surf2);border:1px solid var(--bdr2);border-radius:var(--r);padding:5px 8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;outline:none;-webkit-appearance:none;appearance:none;cursor:pointer;}
+.gtbl select:focus{border-color:var(--gold-d);}
+.isec select{background:var(--surf2);border:1px solid var(--bdr2);border-radius:var(--r);padding:6px 10px;color:var(--text);font-size:12px;outline:none;cursor:pointer;}
 .rtag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:9px;font-weight:600;}
 .cli-arr{display:inline-block;transition:transform .2s;margin-right:5px;font-size:10px;color:var(--text-d);}
 .cli-arr.open{transform:rotate(90deg);}
@@ -140,7 +143,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 </head>
 <body>
 <div class="hdr">
-  <div class="logo">Pariggi <span>Pastas Pariggi — P&L</span></div>
+  <div class="logo">Pastas Pariggi <span>P&L</span></div>
   <div class="period-wrap">
     <div class="live-dot"></div>
     <select class="period-sel" id="period-sel" onchange="setMonth(this.value)"></select>
@@ -245,15 +248,15 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
   </div>
   <div class="alert ag mt16"><strong>Comisión % s/Resultado Bruto:</strong> De cada peso de margen bruto del cliente, cuánto se destina en comisión al vendedor. Click en fila para ver detalle por producto.</div>
   <div class="card mt16">
-    <div class="card-t">P&L por Cliente — click encabezado para ordenar, click fila para expandir</div>
+    <div class="card-t">P&L por Cliente</div>
     <div id="cli-empty" class="dim" style="font-size:12px;padding:24px 0;text-align:center;display:none">No hay datos de clientes para este período. Cargá una descarga de ventas con la columna Cliente.</div>
     <div class="ovx">
       <table class="tbl">
         <thead><tr id="cli-thead-row">
-          <th class="left" onclick="sortCli(0)">Cliente</th><th class="left" onclick="sortCli(1)">Vendedor</th>
-          <th onclick="sortCli(2)">Kg</th><th onclick="sortCli(3)">Ventas</th><th onclick="sortCli(4)">CMV+Film</th><th onclick="sortCli(5)">Res.Bruto</th><th onclick="sortCli(6)">UB%</th>
-          <th onclick="sortCli(7)">IIBB</th><th onclick="sortCli(8)">Comisión $</th><th onclick="sortCli(9)">Com%V</th><th onclick="sortCli(10)">Com%RB</th>
-          <th onclick="sortCli(11)">Contrib.M.</th><th onclick="sortCli(12)">CM%</th><th onclick="sortCli(13)">Gastos Op.</th><th onclick="sortCli(14)">Res.Op.</th><th onclick="sortCli(15)">RO%</th>
+          <th class="left" onclick="sortCli(0)">Cliente</th><th class="left" onclick="sortCli(1)">Vendedor</th><th class="left" onclick="sortCli(2)">Lista</th>
+          <th onclick="sortCli(3)">Kg</th><th onclick="sortCli(4)">Ventas</th><th onclick="sortCli(5)">CMV+Film</th><th onclick="sortCli(6)">Res.Bruto</th><th onclick="sortCli(7)">UB%</th>
+          <th onclick="sortCli(8)">IIBB</th><th onclick="sortCli(9)">Comisión $</th><th onclick="sortCli(10)">Com%V</th><th onclick="sortCli(11)">Com%RB</th>
+          <th onclick="sortCli(12)">Contrib.M.</th><th onclick="sortCli(13)">CM%</th><th onclick="sortCli(14)">Gastos Op.</th><th onclick="sortCli(15)">Res.Op.</th><th onclick="sortCli(16)">RO%</th>
         </tr></thead>
         <tbody id="cli-body"></tbody>
       </table>
@@ -374,7 +377,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
   <!-- 5. VENTAS -->
   <div class="isec">
     <h3>5 — Descarga de Ventas</h3>
-    <p style="color:var(--text-d);font-size:11px;margin-bottom:12px">Sin encabezado. Columnas: <strong style="color:var(--gold)">Cliente | Producto | Kilos | Total c/IVA | Total s/IVA | Costo Total | Vendedor</strong></p>
+    <p style="color:var(--text-d);font-size:11px;margin-bottom:12px">Sin encabezado. Columnas: <strong style="color:var(--gold)">Cliente | Producto | Kilos | Total c/IVA | Total s/IVA | Costo Total | Lista de Precios | Vendedor</strong> — Lista de Precios es por cliente (no cambia dentro del mes).</p>
     <div class="g2">
       <div>
         <div class="uz" onclick="document.getElementById('f-v').click()">
@@ -387,7 +390,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
       <div>
         <div class="tw">
           <label style="font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-d);display:block;margin-bottom:5px">O pegar desde Excel (Tab-separado)</label>
-          <textarea id="paste-v" placeholder="Cliente&#9;Producto&#9;Kilos&#9;Total c/IVA&#9;Total s/IVA&#9;Costo Total&#9;Vendedor"></textarea>
+          <textarea id="paste-v" placeholder="Cliente&#9;Producto&#9;Kilos&#9;Total c/IVA&#9;Total s/IVA&#9;Costo Total&#9;Lista de Precios&#9;Vendedor"></textarea>
         </div>
         <button class="btn btn-ghost mt8" onclick="parsePV()">Procesar pegado</button>
       </div>
@@ -887,7 +890,7 @@ function getCliVal(c,col,tgo,tv){
   const go=tv>0?tgo*(c.v/tv):0;
   const ro=cm-go;
   const kg=(c.productos||[]).reduce ? (c.kg||0) : 0;
-  const vals=[c.cli,c.vend,kg,c.v,c.cmv+c.film,rb,rb/c.v,c.iibb,c.com,c.com/c.v,rb?c.com/rb:0,cm,cm/c.v,go,ro,ro/c.v];
+  const vals=[c.cli,c.vend,c.lista||'',kg,c.v,c.cmv+c.film,rb,rb/c.v,c.iibb,c.com,c.com/c.v,rb?c.com/rb:0,cm,cm/c.v,go,ro,ro/c.v];
   return vals[col]!==undefined?vals[col]:0;
 }
 
@@ -916,6 +919,7 @@ function renderCliBody(){
     return`<tr style="cursor:pointer" onclick="toggleCli(${origIdx})">
       <td class="left"><span class="cli-arr" id="arr-${origIdx}">▶</span>${c.cli}</td>
       <td class="left" style="color:var(--text-m)">${c.vend||'—'}</td>
+      <td class="left" style="color:var(--text-d);font-size:11px">${c.lista||'—'}</td>
       <td>${kg>0?kg.toLocaleString('es-AR'):'—'}</td>
       <td>$${fm(c.v)}</td>
       <td class="neg">-$${fm(c.cmv+c.film)}</td>
@@ -930,7 +934,7 @@ function renderCliBody(){
       <td class="neg">-$${fm(go)}</td>
       <td class="${vc(ro)}">$${fm(ro)}</td>
       <td class="pct-c ${vc(ro)}">${fp(ro,c.v)}</td>
-    </tr><tr class="exp-row" id="exp-${origIdx}" style="display:none"><td colspan="16"><div class="exp-inner" id="exp-in-${origIdx}"></div></td></tr>`;
+    </tr><tr class="exp-row" id="exp-${origIdx}" style="display:none"><td colspan="17"><div class="exp-inner" id="exp-in-${origIdx}"></div></td></tr>`;
   }).join('');
   // Totals row
   const tv2=_cliDataCache.reduce((a,c)=>a+c.v,0);
@@ -941,7 +945,7 @@ function renderCliBody(){
   const ttgo=tgo;
   const tro=tcm-ttgo;
   b.innerHTML+=`<tr class="tot">
-    <td class="left">TOTAL</td><td class="left">—</td>
+    <td class="left">TOTAL</td><td class="left">—</td><td class="left dim">—</td>
     <td>${tkg>0?tkg.toLocaleString('es-AR'):'—'}</td>
     <td>$${fm(tv2)}</td>
     <td class="neg">-$${fm(_cliDataCache.reduce((a,c)=>a+c.cmv+c.film,0))}</td>
@@ -1268,10 +1272,10 @@ function renderGastosBase(){
   body.innerHTML=_cargaGastosBase.map((g,i)=>`<tr>
     <td><input type="number" value="${g.sku||''}" style="${iStyle('width:65px;font-family:DM Mono,monospace;font-size:11px')}" onchange="_cargaGastosBase[${i}].sku=+this.value"></td>
     <td><input value="${g.d||''}" style="${iStyle()}" onchange="_cargaGastosBase[${i}].d=this.value"></td>
-    <td><select style="${iStyle('')}" onchange="_cargaGastosBase[${i}].r=this.value">
+    <td><select style="background:var(--surf2);border:1px solid var(--bdr2);border-radius:var(--r);padding:5px 8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;outline:none;width:100%" onchange="_cargaGastosBase[${i}].r=this.value">
       ${rubros.map(r=>`<option value="${r}" ${g.r===r?'selected':''}>${r}</option>`).join('')}
     </select></td>
-    <td><select style="${iStyle('')}" onchange="_cargaGastosBase[${i}].t=this.value">
+    <td><select style="background:var(--surf2);border:1px solid var(--bdr2);border-radius:var(--r);padding:5px 8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;outline:none;width:80px" onchange="_cargaGastosBase[${i}].t=this.value">
       <option value="fijo" ${g.t==='fijo'?'selected':''}>Fijo</option>
       <option value="sistema" ${g.t==='sistema'?'selected':''}>Sistema</option>
       <option value="auto" ${g.t==='auto'?'selected':''}>Auto</option>
@@ -1383,19 +1387,24 @@ function processMonth(){
     const kg=parseNum(r[2]);
     const tot=parseNum(r[3]);
     const tos=r[4]!==undefined&&String(r[4]).trim()!==''?parseNum(r[4]):tot;
-    // Per-row detection: if col5 is numeric treat as costo, col6 as vendedor
-    // if col5 is a known vendedor name, treat as 6-col format
-    const knownVends=['WEB','Hernan Orellana','Ivan Larez','German Thomas','Cristian Werbach',
-      'Imanol','Carlos Mendoza','Orciani','Joela','Pedro Marin'];
-    const col5=String(r[5]||'').trim();
-    const col6=String(r[6]||'').trim();
-    const rowHasCosto=r.length>=7&&col6!==''&&!isNaN(parseFloat(col5.replace(',','.')));
-    let costoTotal=null,vend;
-    if(rowHasCosto){
-      costoTotal=col5!==''?parseNum(r[5]):null;
-      vend=col6||'WEB';
+    // Col layout detection:
+    // 8 cols: Cliente|Prod|Kg|TotalIVA|TotalSIVA|CostoTotal|Lista|Vendedor
+    // 7 cols: Cliente|Prod|Kg|TotalIVA|TotalSIVA|CostoTotal|Vendedor
+    // 6 cols: Cliente|Prod|Kg|TotalIVA|TotalSIVA|Vendedor
+    const c5=String(r[5]||'').trim();
+    const c6=String(r[6]||'').trim();
+    const c7=String(r[7]||'').trim();
+    const c5isNum=c5!==''&&!isNaN(parseFloat(c5.replace(',','.')));
+    let costoTotal=null,lista='',vend;
+    if(r.length>=8&&c7!==''){
+      costoTotal=c5isNum?parseNum(r[5]):null;
+      lista=c6;
+      vend=c7||'WEB';
+    } else if(r.length>=7&&c6!==''&&c5isNum){
+      costoTotal=parseNum(r[5]);
+      vend=c6||'WEB';
     } else {
-      vend=col5||'WEB';
+      vend=c5||'WEB';
     }
     if(!prod) return;
     if(!pm[prod]) pm[prod]={kg:0,v:0,costoTotal:0,com:0,vend,cli};
@@ -1454,17 +1463,24 @@ function processMonth(){
     const kg=parseNum(r[2]);
     const tos=r[4]!==undefined&&String(r[4]).trim()!==''?parseNum(r[4]):parseNum(r[3]);
     let vend,costoLinea=null;
-    const col5c=String(r[5]||'').trim();
-    const col6c=String(r[6]||'').trim();
-    const rowHasCostoC=r.length>=7&&col6c!==''&&!isNaN(parseFloat(col5c.replace(',','.')));
-    if(rowHasCostoC){
-      costoLinea=col5c!==''?parseNum(r[5]):null;
-      vend=col6c||'WEB';
+    const cc5=String(r[5]||'').trim();
+    const cc6=String(r[6]||'').trim();
+    const cc7=String(r[7]||'').trim();
+    const cc5isNum=cc5!==''&&!isNaN(parseFloat(cc5.replace(',','.')));
+    let listaC='';
+    if(r.length>=8&&cc7!==''){
+      costoLinea=cc5isNum?parseNum(r[5]):null;
+      listaC=cc6;
+      vend=cc7||'WEB';
+    } else if(r.length>=7&&cc6!==''&&cc5isNum){
+      costoLinea=parseNum(r[5]);
+      vend=cc6||'WEB';
     } else {
-      vend=col5c||'WEB';
+      vend=cc5||'WEB';
     }
     if(!cli||cli.toUpperCase()==='WEB') return;
-    if(!cliMap[cli]) cliMap[cli]={cli,vend,v:0,cmv:0,film:0,iibb:0,com:0,kg:0,productos:{}};
+    if(!cliMap[cli]) cliMap[cli]={cli,vend,lista:'',v:0,cmv:0,film:0,iibb:0,com:0,kg:0,productos:{}};
+    if(listaC&&!cliMap[cli].lista) cliMap[cli].lista=listaC;
     const cv=costoLinea!==null?costoLinea:0;
     const fv=kg*filmKg;
     const comRow=_cargaComisiones.find(x=>x.v===vend);
