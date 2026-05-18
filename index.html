@@ -254,9 +254,9 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
       <table class="tbl">
         <thead><tr id="cli-thead-row">
           <th class="left" onclick="sortCli(0)">Cliente</th><th class="left" onclick="sortCli(1)">Vendedor</th><th class="left" onclick="sortCli(2)">Lista</th>
-          <th onclick="sortCli(3)">Kg</th><th onclick="sortCli(4)">Ventas</th><th onclick="sortCli(5)">CMV+Film</th><th onclick="sortCli(6)">Res.Bruto</th><th onclick="sortCli(7)">UB%</th>
-          <th onclick="sortCli(8)">IIBB</th><th onclick="sortCli(9)">Comisión $</th><th onclick="sortCli(10)">Com%V</th><th onclick="sortCli(11)">Com%RB</th>
-          <th onclick="sortCli(12)">Contrib.M.</th><th onclick="sortCli(13)">CM%</th><th onclick="sortCli(14)">Gastos Op.</th><th onclick="sortCli(15)">Res.Op.</th><th onclick="sortCli(16)">RO%</th>
+          <th onclick="sortCli(3)">Kg</th><th onclick="sortCli(4)">Ventas</th><th onclick="sortCli(5)">CMV+Film</th><th onclick="sortCli(6)">Res. Bruto</th><th onclick="sortCli(7)">Util.Bruta%</th>
+          <th onclick="sortCli(8)">IIBB</th><th onclick="sortCli(9)">Comisión $</th><th onclick="sortCli(10)">Com. / Venta</th><th onclick="sortCli(11)">Com. / R.Bruto</th>
+          <th onclick="sortCli(12)">C. Marginal</th><th onclick="sortCli(13)">C. Marginal %</th><th onclick="sortCli(14)">Gastos Op.</th><th onclick="sortCli(15)">Resultado Op.</th><th onclick="sortCli(16)">Resultado Op. %</th>
         </tr></thead>
         <tbody id="cli-body"></tbody>
       </table>
@@ -566,14 +566,14 @@ const SKU_RUBRO = {
   1728:{r:'Sueldos',d:'Monotributo Flavia 25%',t:'sistema'},
   1729:{r:'Sueldos',d:'Monotributo Rodrigo 25%',t:'sistema'},
   // COMISIONES — AUTOMATICO
-  301:{r:'Comisiones',d:'Comisiones Hernan',t:'auto'},
-  1652:{r:'Comisiones',d:'Comisiones Ivan',t:'auto'},
-  1654:{r:'Comisiones',d:'Comisiones Cristian Werbach',t:'auto'},
-  1692:{r:'Comisiones',d:'Comision Imanol',t:'auto'},
-  1700:{r:'Comisiones',d:'Comision Carlos Mendoza',t:'auto'},
-  1714:{r:'Comisiones',d:'Comision Orciani',t:'auto'},
-  1715:{r:'Comisiones',d:'Comisiones Joela',t:'auto'},
-  1727:{r:'Comisiones',d:'Comisiones Pedro Marin',t:'auto'},
+  301:{r:'Comisión $',d:'Comisiones Hernan',t:'auto'},
+  1652:{r:'Comisión $',d:'Comisiones Ivan',t:'auto'},
+  1654:{r:'Comisión $',d:'Comisiones Cristian Werbach',t:'auto'},
+  1692:{r:'Comisión $',d:'Comision Imanol',t:'auto'},
+  1700:{r:'Comisión $',d:'Comision Carlos Mendoza',t:'auto'},
+  1714:{r:'Comisión $',d:'Comision Orciani',t:'auto'},
+  1715:{r:'Comisión $',d:'Comisiones Joela',t:'auto'},
+  1727:{r:'Comisión $',d:'Comisiones Pedro Marin',t:'auto'},
   // LOGÍSTICA
   1089:{r:'Logística',d:'Combustible Luciano',t:'sistema'},
   1290:{r:'Logística',d:'Fletes Varios',t:'sistema'},
@@ -699,7 +699,7 @@ function clearDash(){
   document.getElementById('dash-title').textContent='Sin datos';
 }
 function renderDash(){buildPS();const m=AM();if(!m){clearDash();return;}document.getElementById('dash-title').textContent=m.periodo;const tg=Object.values(m.gastos).reduce((a,b)=>a+b,0),rb=m.ventas_netas-m.cmv-m.film,vn=m.ventas_netas,ro=m.resultado_operativo,cm=m.contrib_marginal;
-document.getElementById('kpi-dash').innerHTML=[{l:'Ventas Netas',v:'$'+fm(vn),s:'sin IVA',ac:'var(--gold)'},{l:'CMV + Film',v:'$'+fm(m.cmv+m.film),s:fp(m.cmv+m.film,vn)+' s/ventas',ac:'var(--red)'},{l:'Resultado Bruto',v:'$'+fm(rb),s:fp(rb,vn)+' utilidad bruta',ac:'var(--green)'},{l:'IIBB + Comisiones',v:'$'+fm(m.iibb+m.comisiones),s:fp(m.iibb+m.comisiones,vn)+' s/ventas',ac:'var(--purple)'},{l:'Contribución Marginal',v:'$'+fm(cm),s:fp(cm,vn)+' s/ventas',ac:'var(--blue)'},{l:'Gastos Operativos',v:'$'+fm(tg),s:fp(tg,vn)+' s/ventas',ac:'var(--orange)'},{l:'Resultado Operativo',v:'$'+fm(ro),s:fp(ro,vn)+' margen op.',ac:ro>=0?'var(--green)':'var(--red)',bd:ro>=0?'bg-g':'bg-r',bt:ro>=0?'▲ Positivo':'▼ Negativo'}].map(k=>`<div class="kpi" style="--ac:${k.ac}"><div class="kpi-lbl">${k.l}</div><div class="kpi-val">${k.v}</div><div class="kpi-sub">${k.s}</div>${k.bd?`<span class="badge ${k.bd}" style="margin-top:5px">${k.bt}</span>`:''}</div>`).join('');
+document.getElementById('kpi-dash').innerHTML=[{l:'Ventas Netas',v:'$'+fm(vn),s:'sin IVA',ac:'var(--gold)'},{l:'CMV + Film',v:'$'+fm(m.cmv+m.film),s:fp(m.cmv+m.film,vn)+' s/ventas',ac:'var(--red)'},{l:'Resultado Bruto',v:'$'+fm(rb),s:fp(rb,vn)+' utilidad bruta',ac:'var(--green)'},{l:'IIBB + Comisiones',v:'$'+fm(m.iibb+m.comisiones),s:fp(m.iibb+m.comisiones,vn)+' s/ventas',ac:'var(--purple)'},{l:'C. Marginal',v:'$'+fm(cm),s:fp(cm,vn)+' s/ventas',ac:'var(--blue)'},{l:'Gastos Operativos',v:'$'+fm(tg),s:fp(tg,vn)+' s/ventas',ac:'var(--orange)'},{l:'Resultado Op.',v:'$'+fm(ro),s:fp(ro,vn)+' margen op.',ac:ro>=0?'var(--green)':'var(--red)',bd:ro>=0?'bg-g':'bg-r',bt:ro>=0?'▲ Positivo':'▼ Negativo'}].map(k=>`<div class="kpi" style="--ac:${k.ac}"><div class="kpi-lbl">${k.l}</div><div class="kpi-val">${k.v}</div><div class="kpi-sub">${k.s}</div>${k.bd?`<span class="badge ${k.bd}" style="margin-top:5px">${k.bt}</span>`:''}</div>`).join('');
 renderStacked('ch-stk','stk-legend',m);renderFunnel('ch-funnel',m);renderBL(m);renderPnLMain(m);}
 
 function renderStacked(cid,legId,m){if(CH[cid])CH[cid].destroy();
@@ -708,7 +708,7 @@ const segs=[
   {l:'CMV',v:m.cmv,c:'#e05252'},
   {l:'Film',v:m.film,c:'#d4853a'},
   {l:'IIBB',v:m.iibb,c:'#9b6fc9'},
-  {l:'Comisiones',v:m.comisiones,c:'#5e8fc9'},
+  {l:'Comisión $',v:m.comisiones,c:'#5e8fc9'},
   {l:'Gastos Op.',v:tg,c:'#c9a84c'},
   {l:'Res. Operativo',v:Math.max(0,m.resultado_operativo),c:'#4caf82'},
 ];
@@ -723,13 +723,13 @@ const pts=[{l:'Ventas Netas',v:vn,c:'#c9a84c'},{l:'Resultado Bruto',v:rb,c:'#5e8
 const ctx=document.getElementById(cid).getContext('2d');
 CH[cid]=new Chart(ctx,{type:'bar',data:{labels:pts.map(p=>p.l),datasets:[{data:pts.map(p=>+(p.v/vn*100).toFixed(1)),backgroundColor:pts.map(p=>p.c+'bb'),borderColor:pts.map(p=>p.c),borderWidth:1,borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{const p=pts[ctx.dataIndex];return[' $'+fm(p.v,true),' '+fp(p.v,vn)+' sobre ventas'];}}}}  ,scales:{x:{max:100,ticks:{color:'#7a7668',font:{size:9},callback:v=>v+'%'},grid:{color:'rgba(255,255,255,.05)'}},y:{ticks:{color:'#bbb',font:{size:10}},grid:{display:false}}}}});}
 
-function renderBL(m){const vn=m.ventas_netas,tc=[{l:'CMV',v:m.cmv,c:'#e05252'},{l:'Film',v:m.film,c:'#d4853a'},{l:'IIBB (3%)',v:m.iibb,c:'#9b6fc9'},{l:'Comisiones',v:m.comisiones,c:'#5e8fc9'}],tcT=tc.reduce((a,c)=>a+c.v,0);
+function renderBL(m){const vn=m.ventas_netas,tc=[{l:'CMV',v:m.cmv,c:'#e05252'},{l:'Film',v:m.film,c:'#d4853a'},{l:'IIBB (3%)',v:m.iibb,c:'#9b6fc9'},{l:'Comisión $',v:m.comisiones,c:'#5e8fc9'}],tcT=tc.reduce((a,c)=>a+c.v,0);
 document.getElementById('bl-costos').innerHTML=tc.map(c=>`<div class="bitem"><div class="blbl">${c.l}</div><div class="bbar"><div class="bfill" style="width:${c.v/tcT*100}%;background:${c.c}"></div></div><div class="bval">$${fm(c.v)}</div><div class="bpct">${fp(c.v,vn)}</div></div>`).join('');
 const tg=Object.values(m.gastos).reduce((a,b)=>a+b,0);
 document.getElementById('bl-gastos').innerHTML=Object.entries(m.gastos).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="bitem"><div class="blbl">${k}</div><div class="bbar"><div class="bfill" style="width:${v/tg*100}%;background:${RC[k]||'#7a7668'}"></div></div><div class="bval">$${fm(v)}</div><div class="bpct">${fp(v,vn)}</div></div>`).join('');}
 
 function renderPnLMain(m){const tg=Object.values(m.gastos).reduce((a,b)=>a+b,0),rb=m.ventas_netas-m.cmv-m.film,vn=m.ventas_netas,ro=m.resultado_operativo;
-const rows=[{l:'Ventas Netas',v:vn,p:fp(vn,vn),cls:'sub'},{sec:'COSTO DE MERCADERÍA VENDIDA'},{l:'CMV',v:-m.cmv,p:fp(-m.cmv,vn),cls:'ind'},{l:'Film',v:-m.film,p:fp(-m.film,vn),cls:'ind'},{l:'Resultado Bruto',v:rb,p:fp(rb,vn),cls:'sub hl'},{sec:'DEDUCCIONES DIRECTAS'},{l:'Ingresos Brutos (3%)',v:-m.iibb,p:fp(-m.iibb,vn),cls:'ind'},{l:'Comisiones de venta',v:-m.comisiones,p:fp(-m.comisiones,vn),cls:'ind'},{l:'Contribución Marginal',v:m.contrib_marginal,p:fp(m.contrib_marginal,vn),cls:'tot'},{sec:'GASTOS OPERATIVOS'},...Object.entries(m.gastos).map(([k,v])=>({l:k,v:-v,p:fp(-v,vn),cls:'ind'})),{l:'Total Gastos Operativos',v:-tg,p:fp(-tg,vn),cls:'sub'},{l:'Resultado Operativo',v:ro,p:fp(ro,vn),cls:'tot'},{sec:'IMPUESTOS'},{l:'IIGG — estimación anual (ver Acumulado)',v:null,p:'',cls:'ind dim'}];
+const rows=[{l:'Ventas Netas',v:vn,p:fp(vn,vn),cls:'sub'},{sec:'COSTO DE MERCADERÍA VENDIDA'},{l:'CMV',v:-m.cmv,p:fp(-m.cmv,vn),cls:'ind'},{l:'Film',v:-m.film,p:fp(-m.film,vn),cls:'ind'},{l:'Resultado Bruto',v:rb,p:fp(rb,vn),cls:'sub hl'},{sec:'DEDUCCIONES DIRECTAS'},{l:'Ingresos Brutos (3%)',v:-m.iibb,p:fp(-m.iibb,vn),cls:'ind'},{l:'Comisión de venta',v:-m.comisiones,p:fp(-m.comisiones,vn),cls:'ind'},{l:'C. Marginal',v:m.contrib_marginal,p:fp(m.contrib_marginal,vn),cls:'tot'},{sec:'GASTOS OPERATIVOS'},...Object.entries(m.gastos).map(([k,v])=>({l:k,v:-v,p:fp(-v,vn),cls:'ind'})),{l:'Total Gastos Operativos',v:-tg,p:fp(-tg,vn),cls:'sub'},{l:'Resultado Op.',v:ro,p:fp(ro,vn),cls:'tot'},{sec:'IMPUESTOS'},{l:'IIGG — estimación anual (ver Acumulado)',v:null,p:'',cls:'ind dim'}];
 document.getElementById('pnl-main').innerHTML='<thead><tr><th class="left">Concepto</th><th>Importe $</th><th>% s/Ventas</th></tr></thead><tbody>'+rows.map(r=>{if(r.sec)return`<tr class="sec"><td colspan="3">${r.sec}</td></tr>`;const cls=r.cls||'';const isInd=cls.includes('ind');const vd=r.v!==null?`<span class="${vc(r.v)}">\$${fm(r.v,true)}</span>`:'<span class="dim">ver Acumulado</span>';return`<tr class="${cls}"><td class="${isInd?'ind left':'left'}">${r.l}</td><td>${vd}</td><td class="pct-c">${r.p}</td></tr>`;}).join('')+'</tbody>';}
 // PRODUCTOS
 function renderProd(){const m=AM();if(!m){
@@ -820,13 +820,13 @@ CH['pv']=new Chart(document.getElementById('ch-pv').getContext('2d'),{
   }
 });}
 
-function renderProdTbl(){const m=AM();if(!m)return;const cols=['Producto','Kg','Ventas','CMV','Film','Util.Bruta%','IIBB','Comisiones','Contrib.Marginal','CM%','Gastos Op.','Res.Operativo','RO%'];
+function renderProdTbl(){const m=AM();if(!m)return;const cols=['Producto','Kg','Ventas','CMV','Film','Res.Bruto','Util.Bruta%','IIBB','Comisión $','Com./Venta','Com./R.Bruto','C. Marginal','C. Marginal %','Gastos Op.','Resultado Op.','Resultado Op. %'];
 const hd=document.getElementById('pnl-prod-head');hd.innerHTML='<tr>'+cols.map((c,i)=>`<th class="${i===0?'left':''}" onclick="sProd(${i})">${c}</th>`).join('')+'</tr>';
 const tgo_p=Object.values(m.gastos).reduce((a,b)=>a+b,0);
 const tv_p=m.productos.reduce((a,p)=>a+p.v,0);
-const sorted=[...m.productos].sort((a,b)=>{if(PSC<0)return b.v-a.v;const gv=(p,i)=>{const rb=getRB(p),cm=getCM(p),ro=getRO(p,tgo_p,tv_p);return[p.n,p.kg,p.v,p.cmv,p.film,(rb/p.v)*100,p.iibb,p.com,cm,(cm/p.v)*100,ro,(ro/p.v)*100][i];};const av=gv(a,PSC),bv=gv(b,PSC);if(typeof av==='string')return PSD*(av.localeCompare(bv));return PSD*(bv-av);});
+const sorted=[...m.productos].sort((a,b)=>{if(PSC<0)return b.v-a.v;const gv=(p,i)=>{const rb=getRB(p),cm=getCM(p),ro=getRO(p,tgo_p,tv_p);return[p.n,p.kg,p.v,p.cmv,p.film,rb,(rb/p.v)*100,p.iibb,p.com,(p.com/p.v)*100,rb?(p.com/rb)*100:0,cm,(cm/p.v)*100,ro,(ro/p.v)*100][i];};const av=gv(a,PSC),bv=gv(b,PSC);if(typeof av==='string')return PSD*(av.localeCompare(bv));return PSD*(bv-av);});
 const tv=sorted.reduce((a,p)=>a+p.v,0);
-document.getElementById('pnl-prod-body').innerHTML=sorted.map((p)=>{const rb=getRB(p),cm=getCM(p),go=getGO(p,tgo_p,tv_p),ro=getRO(p,tgo_p,tv_p),col=PC[m.productos.indexOf(p)%PC.length];return`<tr><td class="left"><span class="pdot" style="background:${col}"></span>${p.n}</td><td>${p.kg.toLocaleString('es-AR')}</td><td>$${fm(p.v)}</td><td class="neg">-$${fm(p.cmv)}</td><td class="neg">-$${fm(p.film)}</td><td class="${vc(rb)}">${fp(rb,p.v)}</td><td class="neg">-$${fm(p.iibb)}</td><td class="neg">-$${fm(p.com)}</td><td class="${vc(cm)}">$${fm(cm)}</td><td class="pct-c ${vc(cm)}">${fp(cm,p.v)}</td><td class="neg">-$${fm(go)}</td><td class="${vc(ro)}">$${fm(ro)}</td><td class="pct-c ${vc(ro)}">${fp(ro,p.v)}</td></tr>`;}).join('')+`<tr class="tot"><td class="left">TOTAL</td><td>${sorted.reduce((a,p)=>a+p.kg,0).toLocaleString('es-AR')}</td><td>$${fm(sorted.reduce((a,p)=>a+p.v,0))}</td><td class="neg">-$${fm(sorted.reduce((a,p)=>a+p.cmv,0))}</td><td class="neg">-$${fm(sorted.reduce((a,p)=>a+p.film,0))}</td><td class="pos">${fp(sorted.reduce((a,p)=>a+p.v-p.cmv-p.film,0),tv)}</td><td class="neg">-$${fm(sorted.reduce((a,p)=>a+p.iibb,0))}</td><td class="neg">-$${fm(sorted.reduce((a,p)=>a+p.com,0))}</td><td class="pos">$${fm(sorted.reduce((a,p)=>a+getCM(p),0))}</td><td class="pct-c pos">${fp(sorted.reduce((a,p)=>a+getCM(p),0),tv)}</td><td class="neg">-$${fm(sorted.reduce((a,p)=>a+getGO(p,tgo_p,tv_p),0))}</td><td class="${vc(sorted.reduce((a,p)=>a+getRO(p,tgo_p,tv_p),0))}">$${fm(sorted.reduce((a,p)=>a+getRO(p,tgo_p,tv_p),0))}</td><td class="pct-c">${fp(sorted.reduce((a,p)=>a+getRO(p,tgo_p,tv_p),0),tv)}</td></tr>`;
+document.getElementById('pnl-prod-body').innerHTML=sorted.map((p)=>{const rb=getRB(p),cm=getCM(p),go=getGO(p,tgo_p,tv_p),ro=getRO(p,tgo_p,tv_p),col=PC[m.productos.indexOf(p)%PC.length];return`<tr><td class="left"><span class="pdot" style="background:${col}"></span>${p.n}</td><td>${p.kg.toLocaleString('es-AR')}</td><td>$${fm(p.v)}</td><td class="neg">-$${fm(p.cmv)}</td><td class="neg">-$${fm(p.film)}</td><td class="${vc(rb)}">$${fm(rb)}</td><td class="pct-c">${fp(rb,p.v)}</td><td class="neg">-$${fm(p.iibb)}</td><td class="neg">-$${fm(p.com)}</td><td class="pct-c">${fp(p.com,p.v)}</td><td class="pct-c">${fp(p.com,rb)}</td><td class="${vc(cm)}">$${fm(cm)}</td><td class="pct-c ${vc(cm)}">${fp(cm,p.v)}</td><td class="neg">-$${fm(go)}</td><td class="${vc(ro)}">$${fm(ro)}</td><td class="pct-c ${vc(ro)}">${fp(ro,p.v)}</td></tr>`;}).join('')+`<tr class="tot"><td class="left">TOTAL</td><td>${sorted.reduce((a,p)=>a+p.kg,0).toLocaleString('es-AR')}</td><td>$${fm(sorted.reduce((a,p)=>a+p.v,0))}</td><td class="neg">-$${fm(sorted.reduce((a,p)=>a+p.cmv,0))}</td><td class="neg">-$${fm(sorted.reduce((a,p)=>a+p.film,0))}</td><td class="pos">$${fm(sorted.reduce((a,p)=>a+getRB(p),0))}</td><td class="pct-c">${fp(sorted.reduce((a,p)=>a+getRB(p),0),tv)}</td><td class="neg">-$${fm(sorted.reduce((a,p)=>a+p.iibb,0))}</td><td class="neg">-$${fm(sorted.reduce((a,p)=>a+p.com,0))}</td><td class="pct-c">${fp(sorted.reduce((a,p)=>a+p.com,0),tv)}</td><td class="pct-c">${fp(sorted.reduce((a,p)=>a+p.com,0),sorted.reduce((a,p)=>a+getRB(p),0))}</td><td class="pos">$${fm(sorted.reduce((a,p)=>a+getCM(p),0))}</td><td class="pct-c pos">${fp(sorted.reduce((a,p)=>a+getCM(p),0),tv)}</td><td class="neg">-$${fm(sorted.reduce((a,p)=>a+getGO(p,tgo_p,tv_p),0))}</td><td class="${vc(sorted.reduce((a,p)=>a+getRO(p,tgo_p,tv_p),0))}">$${fm(sorted.reduce((a,p)=>a+getRO(p,tgo_p,tv_p),0))}</td><td class="pct-c">${fp(sorted.reduce((a,p)=>a+getRO(p,tgo_p,tv_p),0),tv)}</td></tr>`;
 hd.querySelectorAll('th').forEach((th,i)=>{th.classList.remove('sa','sd');if(i===PSC)th.classList.add(PSD>0?'sa':'sd');});}
 function sProd(c){if(PSC===c)PSD*=-1;else{PSC=c;PSD=-1;}renderProdTbl();}
 
@@ -890,10 +890,19 @@ function sortCli(col){
 function getCliVal(c,col,tgo,tv){
   const rb=c.v-c.cmv-c.film;
   const cm=rb-c.iibb-c.com;
-  const go=tv>0?tgo*(c.v/tv):0;
+  const tvSafe=tv||1;
+  const go=tvSafe>0?tgo*(c.v/tvSafe):0;
   const ro=cm-go;
-  const kg=(c.productos||[]).reduce ? (c.kg||0) : 0;
-  const vals=[c.cli,c.vend,c.lista||'',kg,c.v,c.cmv+c.film,rb,rb/c.v,c.iibb,c.com,c.com/c.v,rb?c.com/rb:0,cm,cm/c.v,go,ro,ro/c.v];
+  const kg=c.kg||0;
+  // cols: 0=cli,1=vend,2=lista,3=kg,4=ventas,5=cmv+film,6=rb,7=ub%,
+  //       8=iibb,9=com$,10=com%v,11=com%rb,12=cm,13=cm%,14=go,15=ro,16=ro%
+  const vals=[
+    c.cli, c.vend, c.lista||'', kg,
+    c.v, c.cmv+c.film, rb, rb/tvSafe,
+    c.iibb, c.com, c.com/tvSafe, rb?c.com/rb:0,
+    cm, cm/tvSafe,
+    go, ro, ro/tvSafe
+  ];
   return vals[col]!==undefined?vals[col]:0;
 }
 
@@ -903,11 +912,12 @@ function renderCliBody(){
   const m=AM();if(!m)return;
   const tgo=Object.values(m.gastos).reduce((a,b)=>a+b,0);
   const tv=_cliDataCache.reduce((a,c)=>a+c.v,0);
+  const tv2=_cliDataCache.reduce((a,x)=>a+x.v,0);
   const sorted=[..._cliDataCache];
   if(CLI_SORT.col>=0){
     sorted.sort((a,b)=>{
-      const av=getCliVal(a,CLI_SORT.col,tgo,tv);
-      const bv=getCliVal(b,CLI_SORT.col,tgo,tv);
+      const av=getCliVal(a,CLI_SORT.col,tgo,tv2);
+      const bv=getCliVal(b,CLI_SORT.col,tgo,tv2);
       if(typeof av==='string') return CLI_SORT.dir*(av.localeCompare(bv));
       return CLI_SORT.dir*(bv-av);
     });
@@ -1004,9 +1014,9 @@ function toggleCli(i){
     <thead><tr style="background:var(--surf3)">
       <th class="left" style="padding-left:8px">Producto</th>
       <th>Kg</th><th>Ventas</th><th>CMV</th><th>Film</th>
-      <th>UB%</th><th>IIBB</th><th>Comisión</th>
-      <th>Contrib.M.</th><th>CM%</th>
-      <th>Gastos Op.</th><th>Res.Op.</th><th>RO%</th>
+      <th>Util.Bruta%</th><th>IIBB</th><th>Comisión $</th><th>Com./Venta</th><th>Com./R.Bruto</th>
+      <th>C. Marginal</th><th>C. Marginal %</th>
+      <th>Gastos Op.</th><th>Resultado Op.</th><th>Resultado Op. %</th>
     </tr></thead><tbody>`+
   c.productos.map(p=>{
     const rb=p.v-p.cmv-p.film,cm=rb-p.iibb-p.com;
@@ -1021,6 +1031,8 @@ function toggleCli(i){
       <td class="pct-c">${fp(rb,p.v)}</td>
       <td class="neg">-$${fm(p.iibb)}</td>
       <td class="neg">-$${fm(p.com)}</td>
+      <td class="pct-c">${fp(p.com,p.v)}</td>
+      <td class="pct-c ${rb?'':''}">${fp(p.com,rb)}</td>
       <td class="${vc(cm)}">$${fm(cm)}</td>
       <td class="pct-c ${vc(cm)}">${fp(cm,p.v)}</td>
       <td class="neg">-$${fm(goProd)}</td>
@@ -1068,9 +1080,9 @@ function renderAnual(){
     {l:'CMV + Film',v:'$'+fm(tcmv+tfilm),s:fp(tcmv+tfilm,tv)+' s/ventas',ac:'var(--red)'},
     {l:'Resultado Bruto',v:'$'+fm(trb),s:fp(trb,tv)+' utilidad bruta',ac:'var(--green)'},
     {l:'IIBB + Comisiones',v:'$'+fm(tiibb+tcom),s:fp(tiibb+tcom,tv)+' s/ventas',ac:'var(--purple)'},
-    {l:'Contribución Marginal',v:'$'+fm(tcm),s:fp(tcm,tv)+' s/ventas',ac:'var(--blue)'},
+    {l:'C. Marginal',v:'$'+fm(tcm),s:fp(tcm,tv)+' s/ventas',ac:'var(--blue)'},
     {l:'Gastos Operativos',v:'$'+fm(tgo),s:fp(tgo,tv)+' s/ventas',ac:'var(--orange)'},
-    {l:'Resultado Operativo',v:'$'+fm(tro),s:fp(tro,tv)+' margen op.',ac:tro>=0?'var(--green)':'var(--red)',bd:tro>=0?'bg-g':'bg-r',bt:tro>=0?'▲ Positivo':'▼ Negativo'},
+    {l:'Resultado Op.',v:'$'+fm(tro),s:fp(tro,tv)+' margen op.',ac:tro>=0?'var(--green)':'var(--red)',bd:tro>=0?'bg-g':'bg-r',bt:tro>=0?'▲ Positivo':'▼ Negativo'},
     {l:'IIGG Estimado 30%',v:'$'+fm(tiigg),s:'sobre Res.Op. acumulado',ac:'var(--purple)'},
     {l:'Resultado Neto Est.',v:'$'+fm(tneto),s:fp(tneto,tv)+' margen neto',ac:tneto>=0?'var(--green)':'var(--red)'},
   ].map(k=>`<div class="kpi" style="--ac:${k.ac}"><div class="kpi-lbl">${k.l}</div><div class="kpi-val">${k.v}</div><div class="kpi-sub">${k.s||''}</div>${k.bd?`<span class="badge ${k.bd}" style="margin-top:5px">${k.bt}</span>`:''}</div>`).join('');
@@ -1101,10 +1113,10 @@ function renderAnual(){
         tooltip:{callbacks:{label:ctx=>{const m=all[ctx.dataIndex];return` Res.Op.: $${fm(ctx.raw,true)} (${fp(ctx.raw,m.ventas_netas)})`;}}}},
       scales:{x:{ticks:{color:'#7a7668'},grid:{color:'rgba(255,255,255,.04)'}},y:{ticks:{color:'#7a7668',callback:v=>'$'+fm(v)},grid:{color:'rgba(255,255,255,.06)'}}}}});
 
-  const rows=['Ventas Netas','CMV','Film','Resultado Bruto','IIBB','Comisiones','Contribución Marginal','Sueldos','Alquileres y Servicios','Logística','Honorarios y Varios','Mantenimiento','Gastos Bancarios','Total Gastos','Resultado Operativo','IIGG Estimado (30%)','Resultado Neto Estimado'];
-  const gR=(m,r)=>{const tg=Object.values(m.gastos).reduce((a,b)=>a+b,0),rb=m.ventas_netas-m.cmv-m.film,iigg=-Math.max(0,m.resultado_operativo*.30);const map={'Ventas Netas':m.ventas_netas,'CMV':-m.cmv,'Film':-m.film,'Resultado Bruto':rb,'IIBB':-m.iibb,'Comisiones':-m.comisiones,'Contribución Marginal':m.contrib_marginal,'Total Gastos':-tg,'Resultado Operativo':m.resultado_operativo,'IIGG Estimado (30%)':iigg,'Resultado Neto Estimado':m.resultado_operativo+iigg};return map[r]!==undefined?map[r]:-(m.gastos[r]||0);};
-  const subs=['Resultado Bruto','Contribución Marginal','Total Gastos','Resultado Operativo','IIGG Estimado (30%)','Resultado Neto Estimado'];
-  const negs=['CMV','Film','IIBB','Comisiones','Sueldos','Alquileres y Servicios','Logística','Honorarios y Varios','Mantenimiento','Gastos Bancarios','Total Gastos','IIGG Estimado (30%)'];
+  const rows=['Ventas Netas','CMV','Film','Resultado Bruto','IIBB','Comisión $','C. Marginal','Sueldos','Alquileres y Servicios','Logística','Honorarios y Varios','Mantenimiento','Gastos Bancarios','Total Gastos','Resultado Op.','IIGG Estimado (30%)','Resultado Neto Estimado'];
+  const gR=(m,r)=>{const tg=Object.values(m.gastos).reduce((a,b)=>a+b,0),rb=m.ventas_netas-m.cmv-m.film,iigg=-Math.max(0,m.resultado_operativo*.30);const map={'Ventas Netas':m.ventas_netas,'CMV':-m.cmv,'Film':-m.film,'Resultado Bruto':rb,'IIBB':-m.iibb,'Comisión $':-m.comisiones,'C. Marginal':m.contrib_marginal,'Total Gastos':-tg,'Resultado Op.':m.resultado_operativo,'IIGG Estimado (30%)':iigg,'Resultado Neto Estimado':m.resultado_operativo+iigg};return map[r]!==undefined?map[r]:-(m.gastos[r]||0);};
+  const subs=['Resultado Bruto','C. Marginal','Total Gastos','Resultado Op.','IIGG Estimado (30%)','Resultado Neto Estimado'];
+  const negs=['CMV','Film','IIBB','Comisión $','Sueldos','Alquileres y Servicios','Logística','Honorarios y Varios','Mantenimiento','Gastos Bancarios','Total Gastos','IIGG Estimado (30%)'];
 
   document.getElementById('tbl-anual').innerHTML='<thead><tr><th class="left">Concepto</th>'+all.map(m=>`<th>${MNS[m.month]}</th>`).join('')+'<th>Total</th></tr></thead><tbody>'+
     rows.map(r=>{
@@ -1565,10 +1577,10 @@ function renderHistorico(){
     ['CMV Total', '$'+fm(m.cmv,true)],
     ['Film Total', '$'+fm(m.film,true)],
     ['IIBB', '$'+fm(m.iibb,true)],
-    ['Comisiones', '$'+fm(m.comisiones,true)],
+    ['Comisión $', '$'+fm(m.comisiones,true)],
     ['Contrib. Marginal', '$'+fm(m.contrib_marginal,true)],
     ['Total Gastos Op.', '$'+fm(Object.values(m.gastos||{}).reduce((a,b)=>a+b,0),true)],
-    ['Resultado Operativo', '$'+fm(m.resultado_operativo,true)],
+    ['Resultado Op.', '$'+fm(m.resultado_operativo,true)],
   ].map(([k,v])=>`<tr><td class="left" style="color:var(--text-m)">${k}</td><td class="pos">${v}</td></tr>`).join('');
 
   // Sueldos
