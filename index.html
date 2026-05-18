@@ -950,7 +950,6 @@ function renderCliBody(){
     </tr><tr class="exp-row" id="exp-${origIdx}" style="display:none"><td colspan="17"><div class="exp-inner" id="exp-in-${origIdx}"></div></td></tr>`;
   }).join('');
   // Totals row
-  const tv2=_cliDataCache.reduce((a,c)=>a+c.v,0);
   const trb=_cliDataCache.reduce((a,c)=>a+(c.v-c.cmv-c.film),0);
   const tcom=_cliDataCache.reduce((a,c)=>a+c.com,0);
   const tcm=_cliDataCache.reduce((a,c)=>a+(c.v-c.cmv-c.film-c.iibb-c.com),0);
