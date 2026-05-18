@@ -642,6 +642,9 @@ window.addEventListener('DOMContentLoaded',async()=>{
   await ls();
   // Only seed march data if Firestore has no months at all
   if(Object.keys(ST.months).length===0) ST.months['2026-03']=marchData();
+  // Set AMK to most recent loaded month
+  const loadedKeys=Object.keys(ST.months).sort();
+  if(loadedKeys.length) AMK=loadedKeys[loadedKeys.length-1];
   buildPS();
   renderDash();
   showLoading(false);
