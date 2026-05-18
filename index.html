@@ -1117,16 +1117,48 @@ function renderAnual(){
   const subs=['Resultado Bruto','C. Marginal','Total Gastos','Resultado Op.','IIGG Estimado (30%)','Resultado Neto Estimado'];
   const negs=['CMV','Film','IIBB','Comisión $','Sueldos','Alquileres y Servicios','Logística','Honorarios y Varios','Mantenimiento','Gastos Bancarios','Total Gastos','IIGG Estimado (30%)'];
 
-  document.getElementById('tbl-anual').innerHTML='<thead><tr><th class="left">Concepto</th>'+all.map(m=>`<th>${MNS[m.month]}</th>`).join('')+'<th>Total</th></tr></thead><tbody>'+
-    rows.map(r=>{
-      const tot=all.reduce((a,m)=>a+gR(m,r),0);
-      const isSub=subs.includes(r);
-      const isNeg=negs.includes(r);
-      return`<tr class="${isSub?'sub':''}">`+
-        `<td class="left">${r}</td>`+
-        all.map(m=>{const v=gR(m,r);return`<td class="${v===0?'dim':isNeg?'neg':'pos'}">$${fm(v)}</td>`;}).join('')+
-        `<td class="mono ${tot===0?'dim':isNeg?'neg':'pos'}">$${fm(tot)}</td></tr>`;
-    }).join('')+'</tbody>';
+  // Build structured rows same format as dashboard
+  const aRows=[
+    {sec:'COSTO DE MERCADERÍA VENDIDA'},
+    {l:'CMV',          neg:true, key:'CMV'},
+    {l:'Film',         neg:true, key:'Film'},
+    {l:'Resultado Bruto', sub:true, hl:true, key:'Resultado Bruto'},
+    {sec:'DEDUCCIONES DIRECTAS'},
+    {l:'Ingresos Brutos (3%)', neg:true, key:'IIBB'},
+    {l:'Comisión de venta',    neg:true, key:'Comisión $'},
+    {l:'C. Marginal',  sub:true, hl:true, key:'C. Marginal'},
+    {sec:'GASTOS OPERATIVOS'},
+    ...Object.keys(all[0].gastos||{}).map(k=>({l:k, neg:true, key:k})),
+    {l:'Total Gastos Operativos', sub:true, key:'Total Gastos'},
+    {l:'Resultado Op.', sub:true, hl:true, key:'Resultado Op.'},
+    {sec:'IMPUESTOS'},
+    {l:'IIGG Estimado (30%)', neg:true, key:'IIGG Estimado (30%)'},
+    {l:'Resultado Neto Estimado', sub:true, hl:true, key:'Resultado Neto Estimado'},
+  ];
+
+  const nCols=all.length;
+  document.getElementById('tbl-anual').innerHTML=
+    '<thead><tr>'+
+    '<th class="left">Concepto</th>'+
+    '<th class="right" style="width:110px">% s/Ventas</th>'+
+    all.map(m=>`<th>${MNS[m.month]}</th>`).join('')+
+    '<th>Total</th>'+
+    '</tr></thead><tbody>'+
+    // First row: Ventas Netas
+    `<tr class="sub hl"><td class="left">Ventas Netas</td><td class="pct-c">100,0 %</td>${all.map(m=>`<td class="pos">$${fm(m.ventas_netas)}</td>`).join('')}<td class="mono pos">$${fm(tv)}</td></tr>`+
+    aRows.map(r=>{
+      if(r.sec) return`<tr class="sec"><td colspan="${nCols+3}" style="padding:8px 12px;font-size:9px;letter-spacing:.1em;color:var(--text-d);text-transform:uppercase;border-top:1px solid var(--bdr2)">${r.sec}</td></tr>`;
+      const tot=all.reduce((a,m)=>a+gR(m,r.key),0);
+      const pct=tv?fp(tot,tv):'—';
+      const cls=r.sub?'sub':'';
+      const hlStyle=r.hl?'font-weight:600':'padding-left:20px';
+      return`<tr class="${cls}">`+
+        `<td class="left" style="${hlStyle}">${r.l}</td>`+
+        `<td class="pct-c" style="font-size:11px;color:var(--text-d)">${pct}</td>`+
+        all.map(m=>{const v=gR(m,r.key);return`<td class="${v===0?'dim':r.neg?'neg':'pos'}">$${fm(v)}</td>`;}).join('')+
+        `<td class="mono ${tot===0?'dim':r.neg?'neg':'pos'}">$${fm(tot)}</td></tr>`;
+    }).join('')+
+    '</tbody>';
 }
 
 // CARGA
