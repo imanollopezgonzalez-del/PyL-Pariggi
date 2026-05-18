@@ -898,10 +898,10 @@ function getCliVal(c,col,tgo,tv){
   //       8=iibb,9=com$,10=com%v,11=com%rb,12=cm,13=cm%,14=go,15=ro,16=ro%
   const vals=[
     c.cli, c.vend, c.lista||'', kg,
-    c.v, c.cmv+c.film, rb, rb/tvSafe,
-    c.iibb, c.com, c.com/tvSafe, rb?c.com/rb:0,
-    cm, cm/tvSafe,
-    go, ro, ro/tvSafe
+    c.v, c.cmv+c.film, rb, c.v?rb/c.v:0,
+    c.iibb, c.com, c.v?c.com/c.v:0, rb?c.com/rb:0,
+    cm, c.v?cm/c.v:0,
+    go, ro, c.v?ro/c.v:0
   ];
   return vals[col]!==undefined?vals[col]:0;
 }
