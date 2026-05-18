@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>P&L Pariggi v2</title>
+<title>Pastas Pariggi — P&L</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -140,7 +140,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 </head>
 <body>
 <div class="hdr">
-  <div class="logo">Pariggi <span>P&L Dashboard v9</span></div>
+  <div class="logo">Pariggi <span>Pastas Pariggi — P&L</span></div>
   <div class="period-wrap">
     <div class="live-dot"></div>
     <select class="period-sel" id="period-sel" onchange="setMonth(this.value)"></select>
@@ -245,15 +245,15 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
   </div>
   <div class="alert ag mt16"><strong>Comisión % s/Resultado Bruto:</strong> De cada peso de margen bruto del cliente, cuánto se destina en comisión al vendedor. Click en fila para ver detalle por producto.</div>
   <div class="card mt16">
-    <div class="card-t">P&L por Cliente — click fila para expandir productos</div>
+    <div class="card-t">P&L por Cliente — click encabezado para ordenar, click fila para expandir</div>
     <div id="cli-empty" class="dim" style="font-size:12px;padding:24px 0;text-align:center;display:none">No hay datos de clientes para este período. Cargá una descarga de ventas con la columna Cliente.</div>
     <div class="ovx">
       <table class="tbl">
-        <thead><tr>
-          <th class="left">Cliente</th><th class="left">Vendedor</th>
-          <th>Kg</th><th>Ventas</th><th>CMV+Film</th><th>Res.Bruto</th><th>UB%</th>
-          <th>IIBB</th><th>Comisión $</th><th>Com%V</th><th>Com%RB</th>
-          <th>Contrib.M.</th><th>CM%</th><th>Gastos Op.</th><th>Res.Op.</th><th>RO%</th>
+        <thead><tr id="cli-thead-row">
+          <th class="left" onclick="sortCli(0)">Cliente</th><th class="left" onclick="sortCli(1)">Vendedor</th>
+          <th onclick="sortCli(2)">Kg</th><th onclick="sortCli(3)">Ventas</th><th onclick="sortCli(4)">CMV+Film</th><th onclick="sortCli(5)">Res.Bruto</th><th onclick="sortCli(6)">UB%</th>
+          <th onclick="sortCli(7)">IIBB</th><th onclick="sortCli(8)">Comisión $</th><th onclick="sortCli(9)">Com%V</th><th onclick="sortCli(10)">Com%RB</th>
+          <th onclick="sortCli(11)">Contrib.M.</th><th onclick="sortCli(12)">CM%</th><th onclick="sortCli(13)">Gastos Op.</th><th onclick="sortCli(14)">Res.Op.</th><th onclick="sortCli(15)">RO%</th>
         </tr></thead>
         <tbody id="cli-body"></tbody>
       </table>
@@ -404,6 +404,28 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
     <div id="g-prev" class="mt8"></div>
   </div>
 
+  <!-- 7. GASTOS BASE -->
+  <div class="isec">
+    <h3>7 — Base de Gastos y Rubros</h3>
+    <p style="color:var(--text-d);font-size:11px;margin-bottom:12px">
+      Definí qué SKU corresponde a qué rubro y si es <strong style="color:var(--gold)">fijo</strong> (desde maestro) o <strong style="color:var(--green)">sistema</strong> (del exportable).
+      Se usa para clasificar automáticamente los asientos al procesar gastos.
+    </p>
+    <div class="ovx">
+      <table class="gtbl" id="gastos-base-tbl">
+        <thead><tr>
+          <th style="width:70px">SKU</th>
+          <th>Descripción</th>
+          <th style="width:160px">Rubro</th>
+          <th style="width:80px">Tipo</th>
+          <th style="width:30px"></th>
+        </tr></thead>
+        <tbody id="gastos-base-body"></tbody>
+      </table>
+    </div>
+    <button class="btn btn-ghost mt12" onclick="addGastoBase()">+ Agregar asiento</button>
+  </div>
+
   <div class="flex gap12 mt16">
     <button class="btn btn-gold" onclick="processMonth()">✓ Procesar y guardar mes</button>
     <button class="btn btn-ghost" onclick="clearLoad()">Limpiar formulario</button>
@@ -514,7 +536,7 @@ async function ls(){
   }catch(e){console.error('Firebase load error:',e);}
 }
 const PC=['#c9a84c','#4caf82','#5e8fc9','#d4853a','#9b6fc9','#e05252','#60c9c2','#a8c96e','#e8a870','#7d9ec9','#c97a8a','#8ec98a','#c9b87a','#6ab0c9'];
-const RC={'Sueldos':'#c9a84c','Alquileres y Servicios':'#5e8fc9','Logística':'#4caf82','Honorarios y Varios':'#9b6fc9','Mantenimiento':'#d4853a','Marketing':'#60c9c2','Gastos Bancarios':'#8ec98a'};
+const RC={'Sueldos':'#c9a84c','Alquileres y Servicios':'#5e8fc9','Logística':'#4caf82','Honorarios y Varios':'#9b6fc9','Mantenimiento':'#d4853a','Gastos Bancarios':'#8ec98a'};
 const MN=['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const MNS=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 
@@ -602,12 +624,12 @@ const SKU_RUBRO = {
   1306:{r:'Logística',d:'Gastos de Movilidad',t:'sistema'},
 };
 
-let ST={maestros:{sueldos:[{n:'Luciano',s:6000000,p:100},{n:'Joela',s:3878524,p:100},{n:'Imanol',s:1619889,p:25},{n:'Ivan',s:2433728,p:25},{n:'Rodrigo',s:1246069,p:25},{n:'Flavia',s:864000,p:25}],comisiones:[{v:'WEB',c:0},{v:'Hernan Orellana',c:5},{v:'Ivan Larez',c:3},{v:'German Thomas',c:3},{v:'Cristian Werbach',c:3},{v:'Imanol',c:3},{v:'Carlos Mendoza',c:3},{v:'Orciani',c:3},{v:'Joela',c:3},{v:'Pedro Marin',c:3}],productos:[{sku:6010,ns:'Bucatini',nd:'Bucatini',c:2917.22},{sku:10202,ns:'Cuerdas de guitarra al huevo',nd:'Cuerdas de Guitarra',c:2917.22},{sku:10208,ns:'Ñoquis de Pura Papa',nd:'Ñoquis de Pura Papa',c:2532.28},{sku:10201,ns:'Cables de Teléfono al Huevo',nd:'Raviolon de Espinaca',c:4399.44},{sku:10204,ns:'Sorrentinos de Jamon y Queso',nd:'Sorrentinos de Jamón y Queso',c:5519.28},{sku:70208,ns:'Fusilli Lunghi al huevo',nd:'Fusilli Lunghi al Huevo',c:3241.36},{sku:70205,ns:'Masa de Lasagna',nd:'Masa de Lasagna',c:2917.22},{sku:70206,ns:'Ravioles de Ricota y Hierbas',nd:'Ravioles de Ricota y Hierbas',c:4599.42},{sku:10205,ns:'Sorrentinos de Calabaza',nd:'Sorrentinos de Calabaza',c:4018.70},{sku:20301,ns:'Cables de Teléfono Integrales',nd:'Fusilli Integral',c:3241.36},{sku:10203,ns:'Puntallete 1.5 Kg',nd:'Puntallete 1.5 Kg',c:3748.94},{sku:10207,ns:'Puntalette 0.500 Kg',nd:'Puntalette 0.500 Kg',c:3748.94},{sku:10206,ns:'Ñoquis de Espinaca',nd:'Ñoquis de Espinaca',c:3708.00},{sku:10209,ns:'Ñoquis a la Romana',nd:'Ñoquis a la Romana',c:2778.48}],film:{u:20.5,g:8},rubros:['Sueldos','Alquileres y Servicios','Logística','Honorarios y Varios','Mantenimiento','Marketing','Gastos Bancarios']},months:{}};
+let ST={maestros:{sueldos:[{n:'Luciano',s:6000000,p:100},{n:'Joela',s:3878524,p:100},{n:'Imanol',s:1619889,p:25},{n:'Ivan',s:2433728,p:25},{n:'Rodrigo',s:1246069,p:25},{n:'Flavia',s:864000,p:25}],comisiones:[{v:'WEB',c:0},{v:'Hernan Orellana',c:5},{v:'Ivan Larez',c:3},{v:'German Thomas',c:3},{v:'Cristian Werbach',c:3},{v:'Imanol',c:3},{v:'Carlos Mendoza',c:3},{v:'Orciani',c:3},{v:'Joela',c:3},{v:'Pedro Marin',c:3}],productos:[{sku:6010,ns:'Bucatini',nd:'Bucatini',c:2917.22},{sku:10202,ns:'Cuerdas de guitarra al huevo',nd:'Cuerdas de Guitarra',c:2917.22},{sku:10208,ns:'Ñoquis de Pura Papa',nd:'Ñoquis de Pura Papa',c:2532.28},{sku:10201,ns:'Cables de Teléfono al Huevo',nd:'Raviolon de Espinaca',c:4399.44},{sku:10204,ns:'Sorrentinos de Jamon y Queso',nd:'Sorrentinos de Jamón y Queso',c:5519.28},{sku:70208,ns:'Fusilli Lunghi al huevo',nd:'Fusilli Lunghi al Huevo',c:3241.36},{sku:70205,ns:'Masa de Lasagna',nd:'Masa de Lasagna',c:2917.22},{sku:70206,ns:'Ravioles de Ricota y Hierbas',nd:'Ravioles de Ricota y Hierbas',c:4599.42},{sku:10205,ns:'Sorrentinos de Calabaza',nd:'Sorrentinos de Calabaza',c:4018.70},{sku:20301,ns:'Cables de Teléfono Integrales',nd:'Fusilli Integral',c:3241.36},{sku:10203,ns:'Puntallete 1.5 Kg',nd:'Puntallete 1.5 Kg',c:3748.94},{sku:10207,ns:'Puntalette 0.500 Kg',nd:'Puntalette 0.500 Kg',c:3748.94},{sku:10206,ns:'Ñoquis de Espinaca',nd:'Ñoquis de Espinaca',c:3708.00},{sku:10209,ns:'Ñoquis a la Romana',nd:'Ñoquis a la Romana',c:2778.48}],film:{u:20.5,g:8},rubros:['Sueldos','Alquileres y Servicios','Logística','Honorarios y Varios','Mantenimiento','Gastos Bancarios']},months:{}};
 
 let AMK='2026-03',CH={},GF=null,RS={rb:{c:'v',d:-1},cm:{c:'v',d:-1},ro:{c:'v',d:-1}},PSC=-1,PSD=-1;
 
 function AM(){return ST.months[AMK];}
-function fm(n,full=false){if(n===null||n===undefined||isNaN(n))return'—';if(full)return Math.round(n).toLocaleString('es-AR');const a=Math.abs(n);if(a>=1000000)return(n/1000000).toFixed(2).replace('.',',')+' M';if(a>=1000)return(n/1000).toFixed(1).replace('.',',')+' K';return Math.round(n).toLocaleString('es-AR');}
+function fm(n,full=false){if(n===null||n===undefined||isNaN(n))return'—';if(full)return Math.round(n).toLocaleString('es-AR');const a=Math.abs(n);if(a>=1000000)return(n/1000000).toFixed(1).replace('.',',')+' M';if(a>=1000)return Math.round(n/1000).toLocaleString('es-AR')+' K';return Math.round(n).toLocaleString('es-AR');}
 function fp(n,d){if(!d)return'—';return(n/d*100).toFixed(1).replace('.',',')+' %';}
 function vc(n){return n>0?'pos':n<0?'neg':'';}
 function marchData(){return{periodo:'Marzo 2026',year:2026,month:3,tc:1146,usd_film:20.5,ventas_netas:62643359.20,cmv:35674456.36,film:2114391.53,iibb:1844451.98,comisiones:2229956.25,contrib_marginal:20780103.09,gastos:{'Sueldos':11988165.29,'Alquileres y Servicios':2263797.41,'Logística':1349956.50,'Honorarios y Varios':1400000,'Mantenimiento':429994.73,'Marketing':268877,'Gastos Bancarios':85222.56},resultado_operativo:3079312.16,productos:[{n:'Raviolon de Espinaca',kg:3928,v:28903702.96,cmv:17281000.32,film:905089.76,iibb:867111.09,com:1120218.35,lo:622871.16,su:5531350.38,al:1044518.19,ma:198399.96,mk:124060.09,ho:645961.27,ro:563122.39,vend:'Ivan Larez'},{n:'Fusilli Lunghi al Huevo',kg:1282,v:8405618.50,cmv:4155585.59,film:295409.96,iibb:239031.91,com:237400.06,lo:181140.02,su:1608597.39,al:303761.13,ma:57697.60,mk:36078.48,ho:187855,ro:1103061.40,vend:'Hernan Orellana'},{n:'Sorrentinos de Jamón y Queso',kg:836,v:8048121.12,cmv:4614118.08,film:192631.12,iibb:238677,com:277185.48,lo:173436,su:1540182.51,al:290841.93,ma:55243.68,mk:34544.04,ho:179865.35,ro:451395.94,vend:'Ivan Larez'},{n:'Ñoquis de Pura Papa',kg:1590,v:6907501.40,cmv:4026325.20,film:366367.80,iibb:195196.05,com:225207.81,lo:148855.79,su:1321900.19,al:249622.37,ma:47414.27,mk:29648.29,ho:154373.94,ro:142589.70,vend:'German Thomas'},{n:'Ravioles de Ricota y Hierbas',kg:336,v:2550288.64,cmv:1545405.12,film:77421.12,iibb:69592.14,com:97998.25,lo:54958.40,su:488053.04,al:92161.99,ma:17505.62,mk:10946.32,ho:56995.73,ro:39250.92,vend:'Cristian Werbach'},{n:'Cuerdas de Guitarra',kg:448,v:2327290.24,cmv:1306914.56,film:103228.16,iibb:69818.71,com:107931.12,lo:50152.81,su:445377.46,al:84103.31,ma:15974.92,mk:9989.16,ho:52011.99,ro:81788.04,vend:'Ivan Larez'},{n:'Puntallete 1.5 Kg',kg:348,v:2057670.64,cmv:1304631.12,film:80186.16,iibb:61730.12,com:102883.53,lo:44342.54,su:393779.90,al:74359.83,ma:14124.20,mk:8831.91,ho:45986.34,ro:-73185.01,vend:'Ivan Larez'},{n:'Sorrentinos de Calabaza',kg:200,v:2023236.16,cmv:803740,film:46084,iibb:60697.08,com:48711.82,lo:43600.48,su:387190.12,al:73115.44,ma:13887.84,mk:8684.11,ho:45216.77,ro:492308.49,vend:'Cristian Werbach'},{n:'Bucatini',kg:98,v:670516,cmv:285887.56,film:22581.16,iibb:20115.48,com:0,lo:14449.54,su:128317.78,al:24231.02,ma:4602.54,mk:2877.98,ho:14985.19,ro:152467.77,vend:'WEB'},{n:'Masa de Lasagna',kg:70,v:407985.60,cmv:204205.40,film:16129.40,iibb:12239.57,com:10136.28,lo:8792.04,su:78076.89,al:14743.73,ma:2800.48,mk:1751.15,ho:9117.96,ro:49992.70,vend:'Hernan Orellana'},{n:'Puntalette 0.500 Kg',kg:23,v:210573.74,cmv:86225.62,film:5299.66,iibb:6317.21,com:0,lo:4537.84,su:40297.85,al:7609.69,ma:1445.41,mk:903.82,ho:4706.06,ro:53230.58,vend:'WEB'},{n:'Ñoquis de Espinaca',kg:10,v:76118.20,cmv:37080,film:2304.20,iibb:2283.55,com:2283.55,lo:1640.34,su:14566.87,al:2750.75,ma:522.49,mk:326.71,ho:1701.15,ro:10658.61,vend:'Ivan Larez'},{n:'Fusilli Integral',kg:7.2,v:54736,cmv:23337.79,film:1659.02,iibb:1642.08,com:0,lo:1179.55,su:10474.92,al:1978.04,ma:375.72,mk:234.94,ho:1223.28,ro:12630.65,vend:'WEB'}],clientes:[{"cli": "Grupo Tronchetto", "vend": "Cristian Werbach", "v": 20253386.9, "cmv": 10800300.18, "film": 610901.03, "iibb": 607601.61, "com": 607601.61, "productos": [{"n": "Fusilli Lunghi al huevo", "v": 6932804.9, "cmv": 3420445.14, "film": 243150.71, "iibb": 207984.15, "com": 207984.15}, {"n": "Raviolon de Espinaca", "v": 10132588.4, "cmv": 5613685.44, "film": 294015.92, "iibb": 303977.65, "com": 303977.65}, {"n": "Sorrentinos de Jamon y Queso", "v": 3187993.6, "cmv": 1766169.6, "film": 73734.4, "iibb": 95639.81, "com": 95639.81}]}, {"cli": "Gergal", "vend": "Ivan Larez", "v": 9413146.08, "cmv": 5955176.16, "film": 337334.88, "iibb": 282394.38, "com": 282394.38, "productos": [{"n": "Cuerdas de Guitarra", "v": 1824530.4, "cmv": 1050199.2, "film": 82951.2, "iibb": 54735.91, "com": 54735.91}, {"n": "Ravioles de Ricota y Hierbas", "v": 1707782.4, "cmv": 1103860.8, "film": 55300.8, "iibb": 51233.47, "com": 51233.47}, {"n": "Raviolon de Espinaca", "v": 5880833.28, "cmv": 3801116.16, "film": 199082.88, "iibb": 176425.0, "com": 176425.0}]}, {"cli": "CEDISUR SA", "vend": "Ivan Larez", "v": 7781851.84, "cmv": 5014706.3, "film": 309315.81, "iibb": 233455.56, "com": 233455.56, "productos": [{"n": "Cuerdas de Guitarra", "v": 202725.6, "cmv": 116688.8, "film": 9216.8, "iibb": 6081.77, "com": 6081.77}, {"n": "Fusilli Lunghi al huevo", "v": 81094.4, "cmv": 46675.58, "film": 3318.05, "iibb": 2432.83, "com": 2432.83}, {"n": "Masa de Lasagna", "v": 202725.6, "cmv": 116688.8, "film": 9216.8, "iibb": 6081.77, "com": 6081.77}, {"n": "Ñoquis de Pura Papa", "v": 1485056.0, "cmv": 1012912.0, "film": 92168.0, "iibb": 44551.68, "com": 44551.68}, {"n": "Ravioles de Ricota y Hierbas", "v": 113852.16, "cmv": 73590.72, "film": 3686.72, "iibb": 3415.56, "com": 3415.56}, {"n": "Raviolon de Espinaca", "v": 5445216.0, "cmv": 3519552.0, "film": 184336.0, "iibb": 163356.48, "com": 163356.48}, {"n": "Sorrentinos de Calabaza", "v": 251182.08, "cmv": 128598.4, "film": 7373.44, "iibb": 7535.46, "com": 7535.46}]}, {"cli": "Pimpollo", "vend": "Hernan Orellana", "v": 4910572.8, "cmv": 3173990.4, "film": 147468.8, "iibb": 147317.18, "com": 245528.64, "productos": [{"n": "Raviolon de Espinaca", "v": 2178086.4, "cmv": 1407820.8, "film": 73734.4, "iibb": 65342.59, "com": 108904.32}, {"n": "Sorrentinos de Jamon y Queso", "v": 2732486.4, "cmv": 1766169.6, "film": 73734.4, "iibb": 81974.59, "com": 136624.32}]}, {"cli": "Le Pain Quotidien", "vend": "Ivan Larez", "v": 4440017.64, "cmv": 2697385.12, "film": 206917.16, "iibb": 133200.53, "com": 133200.53, "productos": [{"n": "Ñoquis de Pura Papa", "v": 2382347.0, "cmv": 1392754.0, "film": 126731.0, "iibb": 71470.41, "com": 71470.41}, {"n": "Puntallete 1.5 Kg", "v": 2057670.64, "cmv": 1304631.12, "film": 80186.16, "iibb": 61730.12, "com": 61730.12}]}, {"cli": "Tratoria", "vend": "Hernan Orellana", "v": 3462072.46, "cmv": 1569563.36, "film": 94333.95, "iibb": 103862.17, "com": 173103.62, "productos": [{"n": "Bucatini", "v": 177892.0, "cmv": 75847.72, "film": 5990.92, "iibb": 5336.76, "com": 8894.6}, {"n": "Fusilli Integral", "v": 54736.0, "cmv": 23337.79, "film": 1659.02, "iibb": 1642.08, "com": 2736.8}, {"n": "Fusilli Lunghi al huevo", "v": 191576.0, "cmv": 81682.27, "film": 5806.58, "iibb": 5747.28, "com": 9578.8}, {"n": "Masa de Lasagna", "v": 205260.0, "cmv": 87516.6, "film": 6912.6, "iibb": 6157.8, "com": 10263.0}, {"n": "Ñoquis de Pura Papa", "v": 451087.2, "cmv": 227905.2, "film": 20737.8, "iibb": 13532.62, "com": 22554.36}, {"n": "Puntalette 0.500 Kg", "v": 210573.74, "cmv": 86225.62, "film": 5299.66, "iibb": 6317.21, "com": 10528.69}, {"n": "Ravioles de Ricota y Hierbas", "v": 384251.2, "cmv": 183976.8, "film": 9216.8, "iibb": 11527.54, "com": 19212.56}, {"n": "Raviolon de Espinaca", "v": 624838.4, "cmv": 299161.92, "film": 15668.56, "iibb": 18745.15, "com": 31241.92}, {"n": "Sorrentinos de Calabaza", "v": 377975.68, "cmv": 128598.4, "film": 7373.44, "iibb": 11339.27, "com": 18898.78}, {"n": "Sorrentinos de Jamon y Queso", "v": 783882.24, "cmv": 375311.04, "film": 15668.56, "iibb": 23516.47, "com": 39194.11}]}, {"cli": "Ragu Restaurante", "vend": "Ivan Larez", "v": 2547575.2, "cmv": 1219105.84, "film": 88020.44, "iibb": 76427.26, "com": 76427.26, "productos": [{"n": "Bucatini", "v": 492624.0, "cmv": 210039.84, "film": 16590.24, "iibb": 14778.72, "com": 14778.72}, {"n": "Ñoquis de Pura Papa", "v": 952295.2, "cmv": 481133.2, "film": 43779.8, "iibb": 28568.86, "com": 28568.86}, {"n": "Raviolon de Espinaca", "v": 1102656.0, "cmv": 527932.8, "film": 27650.4, "iibb": 33079.68, "com": 33079.68}]}, {"cli": "MANJARES DEL MAR SRL", "vend": "Ivan Larez", "v": 2252436.48, "cmv": 1416600.48, "film": 73734.4, "iibb": 67573.09, "com": 67573.09, "productos": [{"n": "Raviolon de Espinaca", "v": 1905825.6, "cmv": 1231843.2, "film": 64517.6, "iibb": 57174.77, "com": 57174.77}, {"n": "Sorrentinos de Calabaza", "v": 209986.56, "cmv": 96448.8, "film": 5530.08, "iibb": 6299.6, "com": 6299.6}, {"n": "Sorrentinos de Jamon y Queso", "v": 136624.32, "cmv": 88308.48, "film": 3686.72, "iibb": 4098.73, "com": 4098.73}]}, {"cli": "Copetin Catering Ivz", "vend": "Joela", "v": 1079848.8, "cmv": 506611.36, "film": 27650.4, "iibb": 32395.46, "com": 32395.46, "productos": []}, {"cli": "*Nuvola", "vend": "German Thomas", "v": 1069405.12, "cmv": 546346.4, "film": 40553.92, "iibb": 32082.15, "com": 32082.15, "productos": []}, {"cli": "Buffet felix Marino", "vend": "German Thomas", "v": 1055888.44, "cmv": 488456.14, "film": 29125.09, "iibb": 31676.65, "com": 31676.65, "productos": []}, {"cli": "Josephinas Cafe", "vend": "Cristian Werbach", "v": 703433.92, "cmv": 304869.76, "film": 16590.24, "iibb": 21103.02, "com": 21103.02, "productos": []}, {"cli": "DISTRIBUIDORA SANTINI 2", "vend": "Ivan Larez", "v": 594740.32, "cmv": 377804.67, "film": 30231.1, "iibb": 17842.21, "com": 17842.21, "productos": []}, {"cli": "Teist Catering", "vend": "Joela", "v": 439591.84, "cmv": 190913.2, "film": 15207.72, "iibb": 13187.76, "com": 13187.76, "productos": []}, {"cli": "Supermercado Rufino (Cordoba)", "vend": "Carlos Mendoza", "v": 367902.56, "cmv": 220293.07, "film": 13180.02, "iibb": 11037.08, "com": 11037.08, "productos": []}, {"cli": "Supermercado Rufino 2 (Cordoba)", "vend": "Carlos Mendoza", "v": 367902.56, "cmv": 220293.07, "film": 13180.02, "iibb": 11037.08, "com": 11037.08, "productos": []}, {"cli": "RES Carnicería Puerto Madero 2", "vend": "Pedro Marin", "v": 325732.84, "cmv": 184022.32, "film": 9677.64, "iibb": 9771.99, "com": 9771.99, "productos": []}, {"cli": "Familia Aufieri", "vend": "German Thomas", "v": 314570.4, "cmv": 145981.78, "film": 11889.67, "iibb": 9437.11, "com": 9437.11, "productos": []}, {"cli": "Bodegón CVLP", "vend": "Pedro Marin", "v": 275203.84, "cmv": 126025.31, "film": 7189.1, "iibb": 8256.12, "com": 8256.12, "productos": []}, {"cli": "El Correo", "vend": "Pedro Marin", "v": 209713.6, "cmv": 97321.18, "film": 7926.45, "iibb": 6291.41, "com": 6291.41, "productos": []}, {"cli": "RES Carnicería Palermo", "vend": "Pedro Marin", "v": 186542.44, "cmv": 104672.56, "film": 5990.92, "iibb": 5596.27, "com": 5596.27, "productos": []}, {"cli": "RES Carnicería Balvanera", "vend": "Pedro Marin", "v": 181285.2, "cmv": 104672.56, "film": 5990.92, "iibb": 5438.56, "com": 5438.56, "productos": []}, {"cli": "RES Carnicería Caballito", "vend": "Pedro Marin", "v": 181285.2, "cmv": 104672.56, "film": 5990.92, "iibb": 5438.56, "com": 5438.56, "productos": []}, {"cli": "RES Carnicería Vicente López", "vend": "Pedro Marin", "v": 181285.2, "cmv": 104672.56, "film": 5990.92, "iibb": 5438.56, "com": 5438.56, "productos": []}, {"cli": "UN CAFÉ", "vend": "Orciani", "v": 92221.44, "cmv": 44154.24, "film": 1843.36, "iibb": 2766.64, "com": 2766.64, "productos": []}, {"cli": "RES Carnicería Almagro", "vend": "Pedro Marin", "v": 77453.6, "cmv": 44154.24, "film": 1843.36, "iibb": 2323.61, "com": 2323.61, "productos": []}, {"cli": "RES Carnicería Escobar", "vend": "Pedro Marin", "v": 77453.6, "cmv": 44154.24, "film": 1843.36, "iibb": 2323.61, "com": 2323.61, "productos": []}],gastos_det:[{sku:1624,d:'Sueldo Luciano 100%',r:'Sueldos',m:6000000},{sku:1684,d:'Sueldo Joela 100%',r:'Sueldos',m:3878524},{sku:1666,d:'Honorarios Contador',r:'Honorarios y Varios',m:1400000},{sku:1277,d:'Sueldo Ivan 25%',r:'Sueldos',m:971400.65},{sku:1089,d:'Combustible Luciano',r:'Logística',m:847384.66},{sku:1658,d:'Luz-Edenor 25%',r:'Alquileres y Servicios',m:501486.18},{sku:1307,d:'Gastos de Publicidad',r:'Alquileres y Servicios',m:500000},{sku:1726,d:'Sueldo Imanol 25%',r:'Sueldos',m:404972.25},{sku:1320,d:'Mantenimiento depósito',r:'Mantenimiento',m:403703.13},{sku:1657,d:'Sueldo Rodrigo 25%',r:'Sueldos',m:304295.76},{sku:1736,d:'Vistage Ivan 30%',r:'Alquileres y Servicios',m:297188.10},{sku:1668,d:'Servicios Web Jose',r:'Marketing',m:268877},{sku:1722,d:'Capacitaciones Vistage Luciano',r:'Alquileres y Servicios',m:261659.50},{sku:1311,d:'Combustible Rodados',r:'Logística',m:232412.50},{sku:1655,d:'Sueldo Flavia 25%',r:'Sueldos',m:216000},{sku:209,d:'Alquiler 25%',r:'Alquileres y Servicios',m:214500},{sku:1675,d:'Peajes 25%',r:'Logística',m:165973.77},{sku:1329,d:'Seguros Rodados 25%',r:'Alquileres y Servicios',m:145180.25},{sku:1664,d:'Sistemas 25%',r:'Alquileres y Servicios',m:129908.63},{sku:1627,d:'Obra Social 25%',r:'Sueldos',m:71190.55},{sku:1669,d:'Autónomos Joela 100%',r:'Sueldos',m:64531.26},{sku:1215,d:'Prosegur 25%',r:'Alquileres y Servicios',m:61651},{sku:1295,d:'Comisión bancaria',r:'Gastos Bancarios',m:58910.05},{sku:1279,d:'Monotributo Ivan 25%',r:'Sueldos',m:50586.43},{sku:1319,d:'Mantenim. Rodados 25%',r:'Logística',m:43500},{sku:1317,d:'Lubricentro 25%',r:'Logística',m:40785},{sku:1464,d:'Gastos Bancarios',r:'Gastos Bancarios',m:26312.51},{sku:1461,d:'Patentes Rodados 25%',r:'Logística',m:19900.57},{sku:1209,d:'Equipos de informática',r:'Mantenimiento',m:16666.60},{sku:210,d:'Teléfonos Claro',r:'Alquileres y Servicios',m:16652.77},{sku:1729,d:'Monotributo Rodrigo 25%',r:'Sueldos',m:16067.70},{sku:1691,d:'Teléfono Ivan 25%',r:'Alquileres y Servicios',m:12852},{sku:1662,d:'Internet 25%',r:'Alquileres y Servicios',m:12711.60},{sku:1728,d:'Monotributo Flavia 25%',r:'Sueldos',m:10596.69},{sku:1661,d:'Internet Ivan 25%',r:'Alquileres y Servicios',m:9468.30},{sku:1659,d:'Gas Natural 25%',r:'Alquileres y Servicios',m:6106.30},{sku:1730,d:'Teléfono Rodrigo 25%',r:'Alquileres y Servicios',m:5563.25},{sku:1287,d:'Librería y Papelería',r:'Mantenimiento',m:5250},{sku:1463,d:'Gastos de Limpieza 25%',r:'Mantenimiento',m:4375},{sku:1660,d:'Agua - Aysa 25%',r:'Alquileres y Servicios',m:3646.97}]}};
@@ -848,29 +870,51 @@ function renderCliCharts(clis,tv){
   });
 }
 
-function renderCli(){
-  const m=AM();if(!m){
-    document.getElementById('cli-body').innerHTML='<tr><td colspan="16" class="dim" style="padding:20px;text-align:center">Sin datos</td></tr>';
-    ['cli-cm','cli-pie'].forEach(id=>{if(CH[id])CH[id].destroy();});
-    return;
-  }
-  document.getElementById('cli-sub').textContent=m.periodo;
-  const clis=(m.clientes||[]).filter(c=>c.cli&&c.cli!=='WEB');
-  const b=document.getElementById('cli-body');
-  const empty=document.getElementById('cli-empty');
-  if(!clis.length){b.innerHTML='';if(empty)empty.style.display='block';return;}
-  if(empty)empty.style.display='none';
-  const tv=clis.reduce((a,c)=>a+c.v,0);
+function sortCli(col){
+  if(CLI_SORT.col===col) CLI_SORT.dir*=-1;
+  else{CLI_SORT.col=col;CLI_SORT.dir=-1;}
+  // Update header indicators
+  document.querySelectorAll('#cli-thead-row th').forEach((th,i)=>{
+    th.classList.remove('sa','sd');
+    if(i===col) th.classList.add(CLI_SORT.dir>0?'sa':'sd');
+  });
+  renderCliBody();
+}
+
+function getCliVal(c,col,tgo,tv){
+  const rb=c.v-c.cmv-c.film;
+  const cm=rb-c.iibb-c.com;
+  const go=tv>0?tgo*(c.v/tv):0;
+  const ro=cm-go;
+  const kg=(c.productos||[]).reduce ? (c.kg||0) : 0;
+  const vals=[c.cli,c.vend,kg,c.v,c.cmv+c.film,rb,rb/c.v,c.iibb,c.com,c.com/c.v,rb?c.com/rb:0,cm,cm/c.v,go,ro,ro/c.v];
+  return vals[col]!==undefined?vals[col]:0;
+}
+
+let _cliDataCache=[];
+
+function renderCliBody(){
+  const m=AM();if(!m)return;
   const tgo=Object.values(m.gastos).reduce((a,b)=>a+b,0);
-  // Gastos ponderados por participacion en ventas
+  const tv=_cliDataCache.reduce((a,c)=>a+c.v,0);
+  const sorted=[..._cliDataCache];
+  if(CLI_SORT.col>=0){
+    sorted.sort((a,b)=>{
+      const av=getCliVal(a,CLI_SORT.col,tgo,tv);
+      const bv=getCliVal(b,CLI_SORT.col,tgo,tv);
+      if(typeof av==='string') return CLI_SORT.dir*(av.localeCompare(bv));
+      return CLI_SORT.dir*(bv-av);
+    });
+  }
+  const b=document.getElementById('cli-body');
   const goC=(cv)=>tv>0?tgo*(cv/tv):0;
-  const kgC=(c)=>(c.productos||[]).reduce((a,p)=>a+(p.kg||0),0);
-  renderCliCharts(clis,tv);
-  b.innerHTML=clis.map((c,i)=>{
+  const kgC=(c)=>c.kg||0;
+  b.innerHTML=sorted.map((c,i)=>{
     const rb=c.v-c.cmv-c.film,cm=rb-c.iibb-c.com,comRB=rb?c.com/rb:0;
     const go=goC(c.v),ro=cm-go,kg=kgC(c);
-    return`<tr style="cursor:pointer" onclick="toggleCli(${i})">
-      <td class="left"><span class="cli-arr" id="arr-${i}">▶</span>${c.cli}</td>
+    const origIdx=_cliDataCache.indexOf(c);
+    return`<tr style="cursor:pointer" onclick="toggleCli(${origIdx})">
+      <td class="left"><span class="cli-arr" id="arr-${origIdx}">▶</span>${c.cli}</td>
       <td class="left" style="color:var(--text-m)">${c.vend||'—'}</td>
       <td>${kg>0?kg.toLocaleString('es-AR'):'—'}</td>
       <td>$${fm(c.v)}</td>
@@ -886,30 +930,53 @@ function renderCli(){
       <td class="neg">-$${fm(go)}</td>
       <td class="${vc(ro)}">$${fm(ro)}</td>
       <td class="pct-c ${vc(ro)}">${fp(ro,c.v)}</td>
-    </tr><tr class="exp-row" id="exp-${i}" style="display:none"><td colspan="16"><div class="exp-inner" id="exp-in-${i}"></div></td></tr>`;
+    </tr><tr class="exp-row" id="exp-${origIdx}" style="display:none"><td colspan="16"><div class="exp-inner" id="exp-in-${origIdx}"></div></td></tr>`;
   }).join('');
-  const tkg=clis.reduce((a,c)=>a+kgC(c),0);
-  const ttgo=clis.reduce((a,c)=>a+goC(c.v),0);
-  const tcm=clis.reduce((a,c)=>a+(c.v-c.cmv-c.film-c.iibb-c.com),0);
+  // Totals row
+  const tv2=_cliDataCache.reduce((a,c)=>a+c.v,0);
+  const trb=_cliDataCache.reduce((a,c)=>a+(c.v-c.cmv-c.film),0);
+  const tcom=_cliDataCache.reduce((a,c)=>a+c.com,0);
+  const tcm=_cliDataCache.reduce((a,c)=>a+(c.v-c.cmv-c.film-c.iibb-c.com),0);
+  const tkg=_cliDataCache.reduce((a,c)=>a+(c.kg||0),0);
+  const ttgo=tgo;
   const tro=tcm-ttgo;
-  const trb=clis.reduce((a,c)=>a+(c.v-c.cmv-c.film),0);
   b.innerHTML+=`<tr class="tot">
     <td class="left">TOTAL</td><td class="left">—</td>
     <td>${tkg>0?tkg.toLocaleString('es-AR'):'—'}</td>
-    <td>$${fm(tv)}</td>
-    <td class="neg">-$${fm(clis.reduce((a,c)=>a+c.cmv+c.film,0))}</td>
+    <td>$${fm(tv2)}</td>
+    <td class="neg">-$${fm(_cliDataCache.reduce((a,c)=>a+c.cmv+c.film,0))}</td>
     <td class="${vc(trb)}">$${fm(trb)}</td>
-    <td class="pct-c">${fp(trb,tv)}</td>
-    <td class="neg">-$${fm(clis.reduce((a,c)=>a+c.iibb,0))}</td>
-    <td class="neg">-$${fm(clis.reduce((a,c)=>a+c.com,0))}</td>
-    <td class="pct-c">${fp(clis.reduce((a,c)=>a+c.com,0),tv)}</td>
-    <td class="pct-c">${fp(clis.reduce((a,c)=>a+c.com,0),trb)}</td>
+    <td class="pct-c">${fp(trb,tv2)}</td>
+    <td class="neg">-$${fm(_cliDataCache.reduce((a,c)=>a+c.iibb,0))}</td>
+    <td class="neg">-$${fm(tcom)}</td>
+    <td class="pct-c">${fp(tcom,tv2)}</td>
+    <td class="pct-c">${fp(tcom,trb)}</td>
     <td class="${vc(tcm)}">$${fm(tcm)}</td>
-    <td class="pct-c ${vc(tcm)}">${fp(tcm,tv)}</td>
+    <td class="pct-c ${vc(tcm)}">${fp(tcm,tv2)}</td>
     <td class="neg">-$${fm(ttgo)}</td>
     <td class="${vc(tro)}">$${fm(tro)}</td>
-    <td class="pct-c ${vc(tro)}">${fp(tro,tv)}</td>
-  </tr>`;}
+    <td class="pct-c ${vc(tro)}">${fp(tro,tv2)}</td>
+  </tr>`;
+}
+
+function renderCli(){
+  const m=AM();if(!m)return;
+  document.getElementById('cli-sub').textContent=m.periodo;
+  const clis=(m.clientes||[]).filter(c=>c.cli&&c.cli.toUpperCase()!=='WEB');
+  const empty=document.getElementById('cli-empty');
+  if(!clis.length){
+    document.getElementById('cli-body').innerHTML='';
+    if(empty)empty.style.display='block';
+    ['cli-cm','cli-pie'].forEach(id=>{if(CH[id])CH[id].destroy();});
+    return;
+  }
+  if(empty)empty.style.display='none';
+  _cliDataCache=clis;
+  CLI_SORT={col:-1,dir:-1};
+  const tv=clis.reduce((a,c)=>a+c.v,0);
+  renderCliCharts(clis,tv);
+  renderCliBody();
+}
 
 function toggleCli(i){
   const exp=document.getElementById('exp-'+i),arr=document.getElementById('arr-'+i),inn=document.getElementById('exp-in-'+i);
@@ -969,17 +1036,80 @@ function clearGF(){GF=null;document.getElementById('g-fbadge').textContent='';co
 function renderGDet(m){const det=(m.gastos_det||[]).filter(g=>!GF||g.r===GF).sort((a,b)=>b.m-a.m);document.getElementById('g-det-body').innerHTML=det.map(g=>{const col=RC[g.r]||'#7a7668';return`<tr><td class="left dim mono" style="font-size:10px">${g.sku}</td><td class="left">${g.d}</td><td class="left"><span class="rtag" style="background:${col}22;color:${col}">${g.r}</span></td><td>$${fm(g.m,true)}</td></tr>`;}).join('');}
 
 // ANUAL
-function renderAnual(){const all=Object.keys(ST.months).sort().map(k=>ST.months[k]);if(!all.length){document.getElementById('kpi-anual').innerHTML='<div class="dim" style="padding:32px 0;text-align:center;font-size:13px">Sin datos acumulados.</div>';document.getElementById('tbl-anual').innerHTML='';['ch-astk','ch-afunnel','ch-aev','ch-aro'].forEach(id=>{if(CH[id])CH[id].destroy();});return;}const tv=all.reduce((a,m)=>a+m.ventas_netas,0),tcmv=all.reduce((a,m)=>a+m.cmv,0),tfilm=all.reduce((a,m)=>a+m.film,0),trb=tv-tcmv-tfilm,tcm=all.reduce((a,m)=>a+m.contrib_marginal,0),tgo=all.reduce((a,m)=>a+Object.values(m.gastos).reduce((x,y)=>x+y,0),0),tro=all.reduce((a,m)=>a+m.resultado_operativo,0);
-document.getElementById('kpi-anual').innerHTML=[{l:'Ventas Acumuladas',v:'$'+fm(tv),s:null,ac:'var(--gold)'},{l:'CMV+Film Acumulado',v:'$'+fm(tcmv+tfilm),s:fp(tcmv+tfilm,tv)+' s/ventas',ac:'var(--red)'},{l:'Resultado Bruto Acum.',v:'$'+fm(trb),s:fp(trb,tv)+' utilidad bruta',ac:'var(--green)'},{l:'Contrib. Marginal Acum.',v:'$'+fm(tcm),s:fp(tcm,tv)+' s/ventas',ac:'var(--blue)'},{l:'Gastos Op. Acumulados',v:'$'+fm(tgo),s:fp(tgo,tv)+' s/ventas',ac:'var(--orange)'},{l:'IIGG Estimado 30%',v:'$'+fm(Math.max(0,tro*.30)),s:'sobre Res.Op. acumulado',ac:'var(--purple)'}].map(k=>`<div class="kpi" style="--ac:${k.ac}"><div class="kpi-lbl">${k.l}</div><div class="kpi-val">${k.v}</div>${k.s?`<div class="kpi-sub">${k.s}</div>`:''}</div>`).join('');
-const mAcum={ventas_netas:tv,cmv:tcmv,film:tfilm,iibb:all.reduce((a,m)=>a+m.iibb,0),comisiones:all.reduce((a,m)=>a+m.comisiones,0),contrib_marginal:tcm,gastos:{'Total Gastos':tgo},resultado_operativo:tro};
-renderStacked('ch-astk','astk-legend',mAcum);renderFunnel('ch-afunnel',mAcum);
-if(CH['aev'])CH['aev'].destroy();CH['aev']=new Chart(document.getElementById('ch-aev').getContext('2d'),{type:'bar',data:{labels:all.map(m=>MNS[m.month]),datasets:[{label:'Ventas',data:all.map(m=>m.ventas_netas),backgroundColor:'rgba(201,168,76,.65)',borderRadius:3},{label:'CMV+Film',data:all.map(m=>m.cmv+m.film),backgroundColor:'rgba(224,82,82,.55)',borderRadius:3},{label:'Gastos Op.',data:all.map(m=>Object.values(m.gastos).reduce((a,b)=>a+b,0)),backgroundColor:'rgba(212,133,58,.55)',borderRadius:3},{label:'CM%',data:all.map(m=>+(m.contrib_marginal/m.ventas_netas*100).toFixed(1)),type:'line',borderColor:'#5e8fc9',pointBackgroundColor:'#5e8fc9',tension:.4,yAxisID:'y2'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#b0aa96',font:{size:10}}}},scales:{x:{ticks:{color:'#7a7668'},grid:{color:'rgba(255,255,255,.04)'}},y:{ticks:{color:'#7a7668',callback:v=>'$'+fm(v)},grid:{color:'rgba(255,255,255,.06)'}},y2:{position:'right',ticks:{color:'#5e8fc9',callback:v=>v+'%'},grid:{display:false}}}}});
-if(CH['aro'])CH['aro'].destroy();CH['aro']=new Chart(document.getElementById('ch-aro').getContext('2d'),{type:'bar',data:{labels:all.map(m=>MNS[m.month]),datasets:[{label:'Res.Op.',data:all.map(m=>m.resultado_operativo),backgroundColor:all.map(m=>m.resultado_operativo>=0?'rgba(76,175,130,.7)':'rgba(224,82,82,.7)'),borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#7a7668'},grid:{color:'rgba(255,255,255,.04)'}},y:{ticks:{color:'#7a7668',callback:v=>'$'+fm(v)},grid:{color:'rgba(255,255,255,.06)'}}}}});
-const rows=['Ventas Netas','CMV','Film','Resultado Bruto','IIBB','Comisiones','Contribución Marginal','Sueldos','Alquileres y Servicios','Logística','Honorarios y Varios','Mantenimiento','Marketing','Gastos Bancarios','Total Gastos','Resultado Operativo','IIGG Estimado (25%)','Resultado Neto Estimado'];
-const gR=(m,r)=>{const tg=Object.values(m.gastos).reduce((a,b)=>a+b,0),rb=m.ventas_netas-m.cmv-m.film,iigg=-Math.max(0,m.resultado_operativo*.30);const map={'Ventas Netas':m.ventas_netas,'CMV':-m.cmv,'Film':-m.film,'Resultado Bruto':rb,'IIBB':-m.iibb,'Comisiones':-m.comisiones,'Contribución Marginal':m.contrib_marginal,'Total Gastos':-tg,'Resultado Operativo':m.resultado_operativo,'IIGG Estimado (25%)':iigg,'Resultado Neto Estimado':m.resultado_operativo+iigg};return map[r]!==undefined?map[r]:-(m.gastos[r]||0);};
-const subs=['Resultado Bruto','Contribución Marginal','Total Gastos','Resultado Operativo','Resultado Neto Estimado'];
-const negs=['CMV','Film','IIBB','Comisiones','Sueldos','Alquileres y Servicios','Logística','Honorarios y Varios','Mantenimiento','Marketing','Gastos Bancarios','Total Gastos','IIGG Estimado (25%)'];
-document.getElementById('tbl-anual').innerHTML='<thead><tr><th class="left">Concepto</th>'+all.map(m=>`<th>${MNS[m.month]}</th>`).join('')+'<th>Total</th></tr></thead><tbody>'+rows.map(r=>{const tot=all.reduce((a,m)=>a+gR(m,r),0);return`<tr class="${subs.includes(r)?'sub':''}"><td class="left">${r}</td>`+all.map(m=>{const v=gR(m,r);return`<td class="${v===0?'dim':negs.includes(r)?'neg':'pos'}">$${fm(v)}</td>`;}).join('')+`<td class="mono ${tot===0?'dim':negs.includes(r)?'neg':'pos'}">$${fm(tot)}</td></tr>`;}).join('')+'</tbody>';}
+function renderAnual(){
+  const all=Object.keys(ST.months).sort().map(k=>ST.months[k]);
+  if(!all.length){
+    document.getElementById('kpi-anual').innerHTML='<div class="dim" style="padding:32px 0;text-align:center;font-size:13px">Sin datos acumulados.</div>';
+    document.getElementById('tbl-anual').innerHTML='';
+    ['ch-astk','ch-afunnel','ch-aev','ch-aro'].forEach(id=>{if(CH[id])CH[id].destroy();});
+    return;
+  }
+  const tv=all.reduce((a,m)=>a+m.ventas_netas,0);
+  const tcmv=all.reduce((a,m)=>a+m.cmv,0);
+  const tfilm=all.reduce((a,m)=>a+m.film,0);
+  const trb=tv-tcmv-tfilm;
+  const tcm=all.reduce((a,m)=>a+m.contrib_marginal,0);
+  const tgo=all.reduce((a,m)=>a+Object.values(m.gastos).reduce((x,y)=>x+y,0),0);
+  const tro=all.reduce((a,m)=>a+m.resultado_operativo,0);
+  const tiibb=all.reduce((a,m)=>a+m.iibb,0);
+  const tcom=all.reduce((a,m)=>a+m.comisiones,0);
+  const tiigg=Math.max(0,tro*.30);
+  const tneto=tro-tiigg;
+
+  document.getElementById('kpi-anual').innerHTML=[
+    {l:'Ventas Netas',v:'$'+fm(tv),s:'sin IVA',ac:'var(--gold)'},
+    {l:'CMV + Film',v:'$'+fm(tcmv+tfilm),s:fp(tcmv+tfilm,tv)+' s/ventas',ac:'var(--red)'},
+    {l:'Resultado Bruto',v:'$'+fm(trb),s:fp(trb,tv)+' utilidad bruta',ac:'var(--green)'},
+    {l:'IIBB + Comisiones',v:'$'+fm(tiibb+tcom),s:fp(tiibb+tcom,tv)+' s/ventas',ac:'var(--purple)'},
+    {l:'Contribución Marginal',v:'$'+fm(tcm),s:fp(tcm,tv)+' s/ventas',ac:'var(--blue)'},
+    {l:'Gastos Operativos',v:'$'+fm(tgo),s:fp(tgo,tv)+' s/ventas',ac:'var(--orange)'},
+    {l:'Resultado Operativo',v:'$'+fm(tro),s:fp(tro,tv)+' margen op.',ac:tro>=0?'var(--green)':'var(--red)',bd:tro>=0?'bg-g':'bg-r',bt:tro>=0?'▲ Positivo':'▼ Negativo'},
+    {l:'IIGG Estimado 30%',v:'$'+fm(tiigg),s:'sobre Res.Op. acumulado',ac:'var(--purple)'},
+    {l:'Resultado Neto Est.',v:'$'+fm(tneto),s:fp(tneto,tv)+' margen neto',ac:tneto>=0?'var(--green)':'var(--red)'},
+  ].map(k=>`<div class="kpi" style="--ac:${k.ac}"><div class="kpi-lbl">${k.l}</div><div class="kpi-val">${k.v}</div><div class="kpi-sub">${k.s||''}</div>${k.bd?`<span class="badge ${k.bd}" style="margin-top:5px">${k.bt}</span>`:''}</div>`).join('');
+
+  const mAcum={ventas_netas:tv,cmv:tcmv,film:tfilm,iibb:tiibb,comisiones:tcom,contrib_marginal:tcm,gastos:{'Total Gastos':tgo},resultado_operativo:tro};
+  renderStacked('ch-astk','astk-legend',mAcum);renderFunnel('ch-afunnel',mAcum);
+
+  if(CH['aev'])CH['aev'].destroy();
+  CH['aev']=new Chart(document.getElementById('ch-aev').getContext('2d'),{type:'bar',
+    data:{labels:all.map(m=>MNS[m.month]),datasets:[
+      {label:'Ventas',data:all.map(m=>m.ventas_netas),backgroundColor:'rgba(201,168,76,.65)',borderRadius:3},
+      {label:'CMV+Film',data:all.map(m=>m.cmv+m.film),backgroundColor:'rgba(224,82,82,.55)',borderRadius:3},
+      {label:'Gastos Op.',data:all.map(m=>Object.values(m.gastos).reduce((a,b)=>a+b,0)),backgroundColor:'rgba(212,133,58,.55)',borderRadius:3},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#b0aa96',font:{size:10}}},
+        tooltip:{callbacks:{label:ctx=>{const m=all[ctx.dataIndex];return` ${ctx.dataset.label}: $${fm(ctx.raw,true)} (${fp(ctx.raw,m.ventas_netas)})`;}}}},
+      scales:{
+        x:{ticks:{color:'#7a7668'},grid:{color:'rgba(255,255,255,.04)'}},
+        y:{ticks:{color:'#7a7668',callback:v=>'$'+fm(v)},grid:{color:'rgba(255,255,255,.06)'}}
+      }}});
+
+  if(CH['aro'])CH['aro'].destroy();
+  CH['aro']=new Chart(document.getElementById('ch-aro').getContext('2d'),{type:'bar',
+    data:{labels:all.map(m=>MNS[m.month]),datasets:[{label:'Res.Op.',data:all.map(m=>m.resultado_operativo),backgroundColor:all.map(m=>m.resultado_operativo>=0?'rgba(76,175,130,.7)':'rgba(224,82,82,.7)'),borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>{const m=all[ctx.dataIndex];return` Res.Op.: $${fm(ctx.raw,true)} (${fp(ctx.raw,m.ventas_netas)})`;}}}},
+      scales:{x:{ticks:{color:'#7a7668'},grid:{color:'rgba(255,255,255,.04)'}},y:{ticks:{color:'#7a7668',callback:v=>'$'+fm(v)},grid:{color:'rgba(255,255,255,.06)'}}}}});
+
+  const rows=['Ventas Netas','CMV','Film','Resultado Bruto','IIBB','Comisiones','Contribución Marginal','Sueldos','Alquileres y Servicios','Logística','Honorarios y Varios','Mantenimiento','Gastos Bancarios','Total Gastos','Resultado Operativo','IIGG Estimado (30%)','Resultado Neto Estimado'];
+  const gR=(m,r)=>{const tg=Object.values(m.gastos).reduce((a,b)=>a+b,0),rb=m.ventas_netas-m.cmv-m.film,iigg=-Math.max(0,m.resultado_operativo*.30);const map={'Ventas Netas':m.ventas_netas,'CMV':-m.cmv,'Film':-m.film,'Resultado Bruto':rb,'IIBB':-m.iibb,'Comisiones':-m.comisiones,'Contribución Marginal':m.contrib_marginal,'Total Gastos':-tg,'Resultado Operativo':m.resultado_operativo,'IIGG Estimado (30%)':iigg,'Resultado Neto Estimado':m.resultado_operativo+iigg};return map[r]!==undefined?map[r]:-(m.gastos[r]||0);};
+  const subs=['Resultado Bruto','Contribución Marginal','Total Gastos','Resultado Operativo','IIGG Estimado (30%)','Resultado Neto Estimado'];
+  const negs=['CMV','Film','IIBB','Comisiones','Sueldos','Alquileres y Servicios','Logística','Honorarios y Varios','Mantenimiento','Gastos Bancarios','Total Gastos','IIGG Estimado (30%)'];
+
+  document.getElementById('tbl-anual').innerHTML='<thead><tr><th class="left">Concepto</th>'+all.map(m=>`<th>${MNS[m.month]}</th>`).join('')+'<th>Total</th></tr></thead><tbody>'+
+    rows.map(r=>{
+      const tot=all.reduce((a,m)=>a+gR(m,r),0);
+      const isSub=subs.includes(r);
+      const isNeg=negs.includes(r);
+      return`<tr class="${isSub?'sub':''}">`+
+        `<td class="left">${r}</td>`+
+        all.map(m=>{const v=gR(m,r);return`<td class="${v===0?'dim':isNeg?'neg':'pos'}">$${fm(v)}</td>`;}).join('')+
+        `<td class="mono ${tot===0?'dim':isNeg?'neg':'pos'}">$${fm(tot)}</td></tr>`;
+    }).join('')+'</tbody>';
+}
 
 // CARGA
 let _vd=[],_gd=[];
@@ -1012,8 +1142,10 @@ const DEFAULT_PRODUCTOS=[
 
 // In-memory state for carga form — populated by onCargaPeriodChange
 let _cargaSueldos=[];
+let CLI_SORT={col:-1,dir:-1};
 let _cargaComisiones=[];
 let _cargaProductos=[];
+let _cargaGastosBase=[...Object.entries(SKU_RUBRO).map(([sku,cfg])=>({sku:parseInt(sku),d:cfg.d,r:cfg.r,t:cfg.t}))];
 
 function getCargaKey(){
   const yr=document.getElementById('l-yr').value;
@@ -1037,6 +1169,7 @@ function onCargaPeriodChange(){
     document.getElementById('l-usd').value=m.l_usd||'';
     document.getElementById('l-gfilm').value=m.l_gfilm||'';
     _cargaSueldos=m._sueldos?m._sueldos.map(s=>({...s})):[];
+    if(m._gastosBase&&m._gastosBase.length) _cargaGastosBase=m._gastosBase.map(g=>({...g}));
     _cargaComisiones=m._comisiones?m._comisiones.map(x=>({...x})):[];
     _cargaProductos=m._productos?m._productos.map(p=>({...p})):[];
     document.getElementById('carga-status').textContent='Datos guardados para este período';
@@ -1071,6 +1204,7 @@ function onCargaPeriodChange(){
   document.getElementById('v-st').textContent='';
   _vd=[]; _gd=[];
   renderCargaSubForms();
+  renderGastosBase();
 }
 
 function iStyle(extra){return`background:transparent;border:none;border-bottom:1px solid var(--bdr2);outline:none;color:var(--text);padding:3px 4px;width:100%;${extra||''}`;}
@@ -1126,6 +1260,26 @@ function renderCargaSubForms(){
       onclick="_cargaProductos.splice(${i},1);renderCargaSubForms()">✕</button></td>
   </tr>`).join('');
 }
+
+function renderGastosBase(){
+  const rubros=ST.maestros.rubros||['Sueldos','Alquileres y Servicios','Logística','Honorarios y Varios','Mantenimiento','Gastos Bancarios'];
+  const body=document.getElementById('gastos-base-body');
+  if(!body) return;
+  body.innerHTML=_cargaGastosBase.map((g,i)=>`<tr>
+    <td><input type="number" value="${g.sku||''}" style="${iStyle('width:65px;font-family:DM Mono,monospace;font-size:11px')}" onchange="_cargaGastosBase[${i}].sku=+this.value"></td>
+    <td><input value="${g.d||''}" style="${iStyle()}" onchange="_cargaGastosBase[${i}].d=this.value"></td>
+    <td><select style="${iStyle('')}" onchange="_cargaGastosBase[${i}].r=this.value">
+      ${rubros.map(r=>`<option value="${r}" ${g.r===r?'selected':''}>${r}</option>`).join('')}
+    </select></td>
+    <td><select style="${iStyle('')}" onchange="_cargaGastosBase[${i}].t=this.value">
+      <option value="fijo" ${g.t==='fijo'?'selected':''}>Fijo</option>
+      <option value="sistema" ${g.t==='sistema'?'selected':''}>Sistema</option>
+      <option value="auto" ${g.t==='auto'?'selected':''}>Auto</option>
+    </select></td>
+    <td><button style="background:none;border:none;color:var(--red);cursor:pointer" onclick="_cargaGastosBase.splice(${i},1);renderGastosBase()">✕</button></td>
+  </tr>`).join('');
+}
+function addGastoBase(){_cargaGastosBase.push({sku:0,d:'',r:'Logística',t:'sistema'});renderGastosBase();}
 
 function addSueldoMes(){_cargaSueldos.push({n:'',m:0});renderCargaSubForms();
   // Focus last name input
@@ -1273,7 +1427,7 @@ function processMonth(){
     'Sueldos':_cargaSueldos.reduce((a,s)=>a+(s.m||0),0),
     'Alquileres y Servicios':0,'Logística':0,
     'Honorarios y Varios':0,'Mantenimiento':0,
-    'Marketing':0,'Gastos Bancarios':0
+    'Gastos Bancarios':0
   };
   const gastos_det=_cargaSueldos.filter(s=>s.m>0).map(s=>({sku:'FIJO',d:s.n,r:'Sueldos',m:s.m}));
 
@@ -1283,7 +1437,8 @@ function processMonth(){
     const nombre=String(r[1]).trim();
     const monto=Math.abs(parseNum(r[2]));
     if(monto===0) return;
-    const cfg=SKU_RUBRO[sku];
+    // Use dynamic gastos base, fallback to SKU_RUBRO
+    const cfg=_cargaGastosBase.find(g=>g.sku===sku)||SKU_RUBRO[sku];
     if(!cfg) return;
     if(cfg.t==='fijo'||cfg.t==='auto') return;
     const rubro=cfg.r;
@@ -1348,6 +1503,7 @@ function processMonth(){
     clientes:cliArr,
     gastos_det,
     _sueldos:[..._cargaSueldos],
+    _gastosBase:[..._cargaGastosBase],
     _comisiones:[..._cargaComisiones],
     _productos:[..._cargaProductos],
   };
