@@ -515,8 +515,8 @@ async function ss(){ /* full save - only used for bulk operations */
   }catch(e){console.error('Firebase save error:',e);}
 }
 async function saveMonth(key){
-  try{ await COL_MONTHS.doc(key).set(ST.months[key]); }
-  catch(e){console.error('Firebase saveMonth error:',e);}
+  try{ await COL_MONTHS.doc(key).set(ST.months[key]); return true; }
+  catch(e){console.error('Firebase saveMonth error:',e); return false;}
 }
 async function deleteMonthRemote(key){
   try{ await COL_MONTHS.doc(key).delete(); }
@@ -536,7 +536,8 @@ async function ls(){
     }
     const mthSnap = await COL_MONTHS.get();
     mthSnap.forEach(doc=>{ ST.months[doc.id]=doc.data(); });
-  }catch(e){console.error('Firebase load error:',e);}
+    return true;
+  }catch(e){console.error('Firebase load error:',e); return false;}
 }
 const PC=['#c9a84c','#4caf82','#5e8fc9','#d4853a','#9b6fc9','#e05252','#60c9c2','#a8c96e','#e8a870','#7d9ec9','#c97a8a','#8ec98a','#c9b87a','#6ab0c9'];
 const RC={'Sueldos':'#c9a84c','Alquileres y Servicios':'#5e8fc9','Logística':'#4caf82','Honorarios y Varios':'#9b6fc9','Mantenimiento':'#d4853a','Gastos Bancarios':'#8ec98a'};
@@ -639,7 +640,7 @@ function marchData(){return{periodo:'Marzo 2026',year:2026,month:3,tc:1146,usd_f
 // INIT
 window.addEventListener('DOMContentLoaded',async()=>{
   showLoading(true);
-  await ls();
+  const fbOk=await ls();
   // Only seed march data if Firestore has no months at all
   if(Object.keys(ST.months).length===0) ST.months['2026-03']=marchData();
   // Set AMK to most recent loaded month
@@ -648,6 +649,12 @@ window.addEventListener('DOMContentLoaded',async()=>{
   buildPS();
   renderDash();
   showLoading(false);
+  if(!fbOk){
+    const b=document.createElement('div');
+    b.style.cssText='position:fixed;bottom:16px;right:16px;background:#3a1a1a;border:1px solid #8c3434;color:#f08080;padding:14px 18px;border-radius:8px;font-size:12px;z-index:9999;max-width:360px;line-height:1.5';
+    b.innerHTML='<strong>⚠ Error de conexión con Firebase</strong><br>Los datos no se cargaron desde la base de datos. Verificá las reglas de Firestore en Firebase Console (proyecto: pyl-pariggi).';
+    document.body.appendChild(b);
+  }
   // Carga form initialized by onCargaPeriodChange when tab opens
 });
 function showLoading(on){
@@ -1408,7 +1415,7 @@ function parseNum(s){
   return parseFloat(s)||0;
 }
 
-function processMonth(){
+async function processMonth(){
   const yr=parseInt(document.getElementById('l-yr').value);
   const mo=parseInt(document.getElementById('l-mo').value);
   const tc=parseFloat(document.getElementById('l-tc').value);
@@ -1570,15 +1577,22 @@ function processMonth(){
     _productos:[..._cargaProductos],
   };
 
-  saveMonth(key);
+  const saveOk=await saveMonth(key);
   AMK=key;
   buildPS();
-  document.getElementById('carga-status').textContent='✓ Guardado correctamente';
-  document.getElementById('load-res').innerHTML=
-    `<div class="alert agr">✓ ${MN[mo]} ${yr} guardado<br>
-    Ventas: $${fm(ts)} | CMV: $${fm(tcmv)} | Film: $${fm(tfilm)} |
-    IIBB: $${fm(tiibb)} | Comis.: $${fm(tComisiones)} |
-    Gastos Op.: $${fm(tgo)} | <strong>Res.Op: $${fm(ro)}</strong></div>`;
+  if(saveOk){
+    document.getElementById('carga-status').textContent='✓ Guardado en Firebase';
+    document.getElementById('load-res').innerHTML=
+      `<div class="alert agr">✓ ${MN[mo]} ${yr} guardado en Firebase<br>
+      Ventas: $${fm(ts)} | CMV: $${fm(tcmv)} | Film: $${fm(tfilm)} |
+      IIBB: $${fm(tiibb)} | Comis.: $${fm(tComisiones)} |
+      Gastos Op.: $${fm(tgo)} | <strong>Res.Op: $${fm(ro)}</strong></div>`;
+  } else {
+    document.getElementById('carga-status').textContent='⚠ Error al guardar — revisá Firestore';
+    document.getElementById('load-res').innerHTML=
+      `<div class="alert ar">⚠ Error al guardar en Firebase. Los datos están en memoria (visibles esta sesión) pero se perderán al recargar.<br>
+      Verificá las reglas de Firestore en Firebase Console → proyecto <strong>pyl-pariggi</strong>.</div>`;
+  }
 }
 
 
