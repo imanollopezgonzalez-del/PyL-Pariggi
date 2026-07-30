@@ -156,16 +156,16 @@ body.authed #auth-gate{display:none}
 .auth-box input{width:100%;padding:10px;margin-bottom:10px;border-radius:6px;border:1px solid #2e2c26;background:#111;color:#eee}
 .auth-box button{width:100%;padding:10px;margin-bottom:8px;border-radius:6px;border:none;cursor:pointer;font-weight:600}
 .auth-box .btn-primary{background:#c9a84c;color:#111}
-.auth-box .btn-ghost{background:transparent;color:#9a9587;border:1px solid #2e2c26}
 .auth-box .auth-err{font-size:11px;color:#e05252;min-height:14px;margin-top:4px}
+.admin-only{display:none!important}
+body.is-admin .admin-only{display:inline-flex!important}
+body:not(.is-admin) #tab-carga{display:none!important}
 </style>
 <div id="auth-gate">
   <div class="auth-box">
     <h1>Pastas Pariggi — P&amp;L</h1>
     <p>Acceso restringido</p>
-    <input type="password" id="auth-pass" placeholder="Contraseña" minlength="6" onkeydown="if(event.key==='Enter')authLogin()">
-    <button class="btn-primary" onclick="authLogin()">Ingresar</button>
-    <button class="btn-ghost" onclick="authRegister()">Primera vez · crear acceso</button>
+    <button class="btn-primary" onclick="authLogin()">Iniciar sesión con Google</button>
     <div class="auth-err" id="auth-err"></div>
   </div>
 </div>
@@ -177,7 +177,8 @@ body.authed #auth-gate{display:none}
     <span class="fx-hint" id="fx-hint"></span>
     <button class="btn-cur active" id="btn-ars" onclick="setCurrency('ARS')">ARS $</button>
     <button class="btn-cur" id="btn-usd" onclick="setCurrency('USD')">USD $</button>
-    <button class="btn-del" onclick="deleteMonth()">✕ Borrar mes</button>
+    <button class="btn-del admin-only" onclick="deleteMonth()">✕ Borrar mes</button>
+    <button class="btn-cur" onclick="authLogout()">Salir</button>
   </div>
 </div>
 <div class="tabs">
@@ -186,7 +187,7 @@ body.authed #auth-gate{display:none}
   <button class="tb" onclick="goTab('clientes')">Por Cliente</button>
   <button class="tb" onclick="goTab('gastos')">Gastos</button>
   <button class="tb" onclick="goTab('anual')">Acumulado Anual</button>
-  <button class="tb" onclick="goTab('carga')">Carga de Datos</button>
+  <button class="tb admin-only" onclick="goTab('carga')">Carga de Datos</button>
   <button class="tb" onclick="goTab('historico')">Histórico</button>
 </div>
 
@@ -535,37 +536,28 @@ const fbApp = firebase.initializeApp({
 });
 const db = firebase.firestore();
 const auth = firebase.auth();
-const AUTH_EMAIL = 'admin@pyl-pariggi.local';
+const ADMIN_EMAIL = 'imanollopezgonzalez@gmail.com';
+const VIEWER_EMAILS = ['imanollopezgonzalez@gmail.com','lucianolopezfuente@gmail.com'];
 const DOC_MAESTROS = db.collection('pariggi').doc('maestros');
 const COL_MONTHS   = db.collection('pariggi_months');
 
 function authErrMsg(e){
   const m={
-    'auth/invalid-credential':'Contraseña incorrecta',
-    'auth/wrong-password':'Contraseña incorrecta',
-    'auth/user-not-found':'No hay cuenta creada todavía — usá "Primera vez"',
-    'auth/email-already-in-use':'Ya existe una cuenta — usá Ingresar',
-    'auth/weak-password':'La contraseña debe tener al menos 6 caracteres',
-    'auth/operation-not-allowed':'Falta habilitar Email/Password en Firebase Console para este proyecto',
+    'auth/popup-closed-by-user':'Se cerró la ventana de Google antes de terminar',
+    'auth/operation-not-allowed':'Falta habilitar Google en Firebase Console para este proyecto',
   };
   return m[e?.code]||('Error: '+(e?.code||e?.message||e));
 }
 window.authLogin=async function(){
-  const pass=document.getElementById('auth-pass').value;
   const err=document.getElementById('auth-err');
   err.textContent='';
-  if(!pass||pass.length<6){err.textContent='Contraseña de al menos 6 caracteres';return}
-  try{ await auth.signInWithEmailAndPassword(AUTH_EMAIL,pass); }
-  catch(e){ console.error(e); err.textContent=authErrMsg(e); }
+  try{
+    const provider=new firebase.auth.GoogleAuthProvider();
+    await auth.signInWithPopup(provider);
+  }catch(e){ console.error(e); err.textContent=authErrMsg(e); }
 };
-window.authRegister=async function(){
-  const pass=document.getElementById('auth-pass').value;
-  const err=document.getElementById('auth-err');
-  err.textContent='';
-  if(!pass||pass.length<6){err.textContent='Elegí una contraseña de al menos 6 caracteres';return}
-  if(!confirm('¿Crear el acceso a este dashboard? Solo hacé esto la primera vez.'))return;
-  try{ await auth.createUserWithEmailAndPassword(AUTH_EMAIL,pass); }
-  catch(e){ console.error(e); err.textContent=authErrMsg(e); }
+window.authLogout=function(){
+  auth.signOut();
 };
 
 async function ss(){ /* full save - only used for bulk operations */
@@ -797,11 +789,19 @@ async function initApp(){
   // Carga form initialized by onCargaPeriodChange when tab opens
 }
 auth.onAuthStateChanged(user=>{
-  if(user){
+  const err=document.getElementById('auth-err');
+  if(user && VIEWER_EMAILS.includes(user.email)){
     document.body.classList.add('authed');
+    document.body.classList.toggle('is-admin', user.email===ADMIN_EMAIL);
+    err.textContent='';
     initApp();
   } else {
+    if(user){
+      err.textContent='Tu cuenta ('+user.email+') no tiene acceso a este dashboard';
+      auth.signOut();
+    }
     document.body.classList.remove('authed');
+    document.body.classList.remove('is-admin');
   }
 });
 function showLoading(on){
