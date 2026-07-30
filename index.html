@@ -8,6 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
 :root{
@@ -145,6 +146,29 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 </style>
 </head>
 <body>
+<style>
+body:not(.authed) .hdr,body:not(.authed) .tabs,body:not(.authed) .panel{display:none!important}
+#auth-gate{position:fixed;inset:0;background:#0f0f0d;display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;font-family:sans-serif}
+body.authed #auth-gate{display:none}
+.auth-box{background:#1a1a17;border:1px solid #2e2c26;border-radius:12px;padding:32px 28px;width:100%;max-width:320px;text-align:center;color:#e8e4d8}
+.auth-box h1{font-size:16px;margin-bottom:4px}
+.auth-box p{font-size:12px;color:#9a9587;margin-bottom:20px}
+.auth-box input{width:100%;padding:10px;margin-bottom:10px;border-radius:6px;border:1px solid #2e2c26;background:#111;color:#eee}
+.auth-box button{width:100%;padding:10px;margin-bottom:8px;border-radius:6px;border:none;cursor:pointer;font-weight:600}
+.auth-box .btn-primary{background:#c9a84c;color:#111}
+.auth-box .btn-ghost{background:transparent;color:#9a9587;border:1px solid #2e2c26}
+.auth-box .auth-err{font-size:11px;color:#e05252;min-height:14px;margin-top:4px}
+</style>
+<div id="auth-gate">
+  <div class="auth-box">
+    <h1>Pastas Pariggi — P&amp;L</h1>
+    <p>Acceso restringido</p>
+    <input type="password" id="auth-pass" placeholder="Contraseña" minlength="6" onkeydown="if(event.key==='Enter')authLogin()">
+    <button class="btn-primary" onclick="authLogin()">Ingresar</button>
+    <button class="btn-ghost" onclick="authRegister()">Primera vez · crear acceso</button>
+    <div class="auth-err" id="auth-err"></div>
+  </div>
+</div>
 <div class="hdr">
   <div class="logo">Pastas Pariggi <span>P&L</span></div>
   <div class="period-wrap">
@@ -510,8 +534,39 @@ const fbApp = firebase.initializeApp({
   appId:"1:639913815784:web:36f7eab9851c1843ece35d"
 });
 const db = firebase.firestore();
+const auth = firebase.auth();
+const AUTH_EMAIL = 'admin@pyl-pariggi.local';
 const DOC_MAESTROS = db.collection('pariggi').doc('maestros');
 const COL_MONTHS   = db.collection('pariggi_months');
+
+function authErrMsg(e){
+  const m={
+    'auth/invalid-credential':'Contraseña incorrecta',
+    'auth/wrong-password':'Contraseña incorrecta',
+    'auth/user-not-found':'No hay cuenta creada todavía — usá "Primera vez"',
+    'auth/email-already-in-use':'Ya existe una cuenta — usá Ingresar',
+    'auth/weak-password':'La contraseña debe tener al menos 6 caracteres',
+    'auth/operation-not-allowed':'Falta habilitar Email/Password en Firebase Console para este proyecto',
+  };
+  return m[e?.code]||('Error: '+(e?.code||e?.message||e));
+}
+window.authLogin=async function(){
+  const pass=document.getElementById('auth-pass').value;
+  const err=document.getElementById('auth-err');
+  err.textContent='';
+  if(!pass||pass.length<6){err.textContent='Contraseña de al menos 6 caracteres';return}
+  try{ await auth.signInWithEmailAndPassword(AUTH_EMAIL,pass); }
+  catch(e){ console.error(e); err.textContent=authErrMsg(e); }
+};
+window.authRegister=async function(){
+  const pass=document.getElementById('auth-pass').value;
+  const err=document.getElementById('auth-err');
+  err.textContent='';
+  if(!pass||pass.length<6){err.textContent='Elegí una contraseña de al menos 6 caracteres';return}
+  if(!confirm('¿Crear el acceso a este dashboard? Solo hacé esto la primera vez.'))return;
+  try{ await auth.createUserWithEmailAndPassword(AUTH_EMAIL,pass); }
+  catch(e){ console.error(e); err.textContent=authErrMsg(e); }
+};
 
 async function ss(){ /* full save - only used for bulk operations */
   try{
@@ -723,8 +778,8 @@ function AM(){return dispM(ST.months[AMK]);}
 function fm(n,full=false){if(n===null||n===undefined||isNaN(n))return'—';if(full)return Math.round(n).toLocaleString('es-AR');const a=Math.abs(n);if(a>=1000000)return(n/1000000).toFixed(1).replace('.',',')+' M';if(a>=1000)return Math.round(n/1000).toLocaleString('es-AR')+' K';return Math.round(n).toLocaleString('es-AR');}
 function fp(n,d){if(!d)return'—';return(n/d*100).toFixed(1).replace('.',',')+' %';}
 function vc(n){return n>0?'pos':n<0?'neg':'';}
-// INIT
-window.addEventListener('DOMContentLoaded',async()=>{
+// INIT — solo despues de autenticarse
+async function initApp(){
   showLoading(true);
   const[fbOk]=await Promise.all([ls(),fetchDolarMonthly()]);
   // Set AMK to most recent loaded month
@@ -740,6 +795,14 @@ window.addEventListener('DOMContentLoaded',async()=>{
     document.body.appendChild(b);
   }
   // Carga form initialized by onCargaPeriodChange when tab opens
+}
+auth.onAuthStateChanged(user=>{
+  if(user){
+    document.body.classList.add('authed');
+    initApp();
+  } else {
+    document.body.classList.remove('authed');
+  }
 });
 function showLoading(on){
   let el=document.getElementById('loading-overlay');
