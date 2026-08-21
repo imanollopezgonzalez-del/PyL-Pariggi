@@ -596,6 +596,7 @@ async function ls(){
     }
     const mthSnap = await COL_MONTHS.get();
     mthSnap.forEach(doc=>{ ST.months[doc.id]=doc.data(); });
+    repararTodo();   // los meses guardados traen el CMV y las comisiones viejas
     return true;
   }catch(e){console.error('Firebase load error:',e); return false;}
 }
@@ -1608,6 +1609,51 @@ function costoCorregido(prod,kg,costoTotal,cli,record){
   if(Math.abs(desv)<=TOL_COSTO) return costoTotal;
   if(record) _ctrlPisados.push({cli,prod,kg,sistema:ckg,maestro:mp.c,desv});
   return kg*mp.c;
+}
+
+// ── REPARACION AUTOMATICA DE LOS MESES GUARDADOS ──
+// El dashboard no recalcula: muestra lo que quedo grabado en Firestore, y las filas crudas
+// de ventas no se guardan, asi que un arreglo de codigo no alcanza para los meses ya cargados.
+// Esto los repara en memoria apenas se cargan: recalcula el CMV con el maestro de productos
+// y las comisiones con vendedor + lista. Es idempotente: si el mes ya esta bien, no toca nada.
+function repararMes(key){
+  const m=ST.months[key]; if(!m) return null;
+  const pr=_cargaProductos, co=_cargaComisiones, pi=_ctrlPisados, sa=_comSinAlta;
+  _cargaProductos=(m._productos&&m._productos.length)?m._productos:ST.maestros.productos;
+  _cargaComisiones=(m._comisiones&&m._comisiones.length)?m._comisiones:ST.maestros.comisiones;
+  _ctrlPisados=[]; _comSinAlta={};
+  let ajuste=0;
+  (m.productos||[]).forEach(p=>{
+    if(!(p.kg>0)) return;
+    const antes=p.cmv||0, nuevo=costoCorregido(p.n,p.kg,antes,'',true);
+    p.cmv=nuevo; ajuste+=antes-nuevo;
+  });
+  (m.clientes||[]).forEach(c=>{
+    (c.productos||[]).forEach(pp=>{
+      if(!(pp.kg>0)) return;
+      pp.cmv=costoCorregido(pp.n,pp.kg,pp.cmv||0,c.cli,false);
+    });
+    if(c.productos&&c.productos.length) c.cmv=c.productos.reduce((a,x)=>a+(x.cmv||0),0);
+    c.com=(c.v||0)*comPctFor(c.vend,c.lista);
+  });
+  m.cmv=(m.productos||[]).reduce((a,p)=>a+(p.cmv||0),0);
+  const totCom=(m.clientes||[]).reduce((a,c)=>a+(c.com||0),0);
+  const comAnt=(m.productos||[]).reduce((a,p)=>a+(p.com||0),0);
+  if(comAnt>0&&totCom>0){const k=totCom/comAnt;(m.productos||[]).forEach(p=>p.com=(p.com||0)*k);}
+  if(totCom>0) m.comisiones=totCom;
+  const tg=Object.values(m.gastos||{}).reduce((a,b)=>a+b,0);
+  m.contrib_marginal=(m.ventas_netas||0)-m.cmv-(m.film||0)-(m.iibb||0)-(m.comisiones||0);
+  m.resultado_operativo=m.contrib_marginal-tg;
+  const r={key,lineas:_ctrlPisados.length,kg:_ctrlPisados.reduce((a,x)=>a+Math.abs(x.kg),0),ajuste};
+  _cargaProductos=pr; _cargaComisiones=co; _ctrlPisados=pi; _comSinAlta=sa;
+  return r;
+}
+function repararTodo(){
+  const out=[];
+  Object.keys(ST.months).forEach(k=>{const r=repararMes(k); if(r&&r.lineas) out.push(r);});
+  if(out.length) console.info('P&L — meses reparados al cargar:',
+    out.map(r=>`${r.key}: ${r.lineas} lineas / ${r.kg.toFixed(1)} kg / CMV -$${Math.round(r.ajuste).toLocaleString('es-AR')}`).join(' | '));
+  return out;
 }
 
 // ── CONTROL DE CARGA: arma el panel de verificación del mes ──
