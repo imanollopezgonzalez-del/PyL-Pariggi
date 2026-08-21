@@ -173,6 +173,7 @@ body:not(.is-admin) #tab-carga{display:none!important}
   <div class="logo">Pastas Pariggi <span>P&L</span></div>
   <div class="period-wrap">
     <div class="live-dot"></div>
+    <span id="ver-stamp" title="Version del dashboard" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-d);border:1px solid var(--bdr2);border-radius:4px;padding:2px 7px;">—</span>
     <select class="period-sel" id="period-sel" onchange="setMonth(this.value)"></select>
     <span class="fx-hint" id="fx-hint"></span>
     <button class="btn-cur active" id="btn-ars" onclick="setCurrency('ARS')">ARS $</button>
@@ -1558,6 +1559,11 @@ function parseNum(s){
 // Hernán tiene un % distinto por lista, así que el maestro debe tener una fila por combinación.
 // La lista de la LÍNEA manda sobre el sufijo del vendedor: en junio-2026 el sufijo vino corrupto
 // (todo el mes quedó estampado "DISTRIBUIDOR", incluso ventas MAYORISTA y GASTRONOMICA).
+// Sello de version: si no coincide con el ultimo deploy, el navegador esta sirviendo cache.
+const APP_VER='2026-08-21-d';
+try{document.getElementById('ver-stamp').textContent=APP_VER;}catch(e){}
+console.info('P&L Pariggi — version',APP_VER);
+
 const LISTAS=['DISTRIBUIDOR','MAYORISTA','GASTRONOMICA'];
 function listaWord(l){const s=String(l||'').toUpperCase();return LISTAS.find(w=>s.includes(w))||'';}
 function vendBase(v){let s=String(v||'').trim();
@@ -1654,16 +1660,17 @@ function repararMes(key){
   const tg=Object.values(m.gastos||{}).reduce((a,b)=>a+b,0);
   m.contrib_marginal=(m.ventas_netas||0)-m.cmv-(m.film||0)-(m.iibb||0)-(m.comisiones||0);
   m.resultado_operativo=m.contrib_marginal-tg;
-  const r={key,lineas:_ctrlPisados.length,kg:_ctrlPisados.reduce((a,x)=>a+Math.abs(x.kg),0),ajuste};
+  const cambios=_ctrlPisados.length+Object.keys(_ctrlCliDistinto).length;
+  const r={key,lineas:_ctrlPisados.length,cambios,kg:_ctrlPisados.reduce((a,x)=>a+Math.abs(x.kg),0),ajuste};
   _cargaProductos=pr; _cargaComisiones=co; _ctrlPisados=pi; _comSinAlta=sa;
   return r;
 }
 async function repararTodo(){
   const out=[];
-  Object.keys(ST.months).forEach(k=>{const r=repararMes(k); if(r&&r.lineas) out.push(r);});
+  Object.keys(ST.months).forEach(k=>{const r=repararMes(k); if(r&&r.cambios) out.push(r);});
   if(!out.length) return out;
   console.info('P&L — meses reparados al cargar:',
-    out.map(r=>`${r.key}: ${r.lineas} lineas / ${r.kg.toFixed(1)} kg / CMV -$${Math.round(r.ajuste).toLocaleString('es-AR')}`).join(' | '));
+    out.map(r=>`${r.key}: ${r.lineas} lineas costo (${r.kg.toFixed(1)} kg, CMV -$${Math.round(r.ajuste).toLocaleString('es-AR')}) + ${r.cambios-r.lineas} vendedores`).join(' | '));
   // Persistir con la sesión del usuario logueado, para que quede corregido tambien en
   // Firestore y no haya que repararlo en cada carga. Idempotente: la proxima vez no
   // encuentra nada para corregir y no vuelve a escribir.
