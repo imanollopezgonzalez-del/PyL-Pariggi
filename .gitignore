@@ -1,1 +1,16 @@
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*serviceAccount*.json
+*service-account*.json
+node_modules/
+.DS_Store
+Thumbs.db
+*.log
+
+# Datos de ventas para análisis — el repo es público, no van acá
 analisis/
