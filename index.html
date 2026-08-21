@@ -1506,6 +1506,89 @@ function parseNum(s){
   return parseFloat(s)||0;
 }
 
+// ── COMISIÓN: resuelve el % por VENDEDOR + LISTA DE PRECIOS ──
+// El export del sistema trae el vendedor con el sufijo de lista pegado ("Hernan Orellana DISTRIBUIDOR").
+// Hernán tiene un % distinto por lista, así que el maestro debe tener una fila por combinación.
+// La lista de la LÍNEA manda sobre el sufijo del vendedor: en junio-2026 el sufijo vino corrupto
+// (todo el mes quedó estampado "DISTRIBUIDOR", incluso ventas MAYORISTA y GASTRONOMICA).
+const LISTAS=['DISTRIBUIDOR','MAYORISTA','GASTRONOMICA'];
+function listaWord(l){const s=String(l||'').toUpperCase();return LISTAS.find(w=>s.includes(w))||'';}
+function vendBase(v){let s=String(v||'').trim();
+  for(const w of LISTAS){const re=new RegExp('\\s+'+w+'$','i'); if(re.test(s)) return s.replace(re,'').trim();}
+  return s;}
+let _comSinAlta={}, _ctrlCostos={}, _ctrlAlertas=[];
+function comPctFor(vend,lista){
+  const base=vendBase(vend), lw=listaWord(lista);
+  const find=n=>_cargaComisiones.find(x=>String(x.v).trim().toUpperCase()===String(n).trim().toUpperCase());
+  const row = (base&&lw&&find(base+' '+lw)) || find(vend) || find(base);
+  if(!row){ const k=vend+(lw?'  [lista '+lw+']':''); _comSinAlta[k]=(_comSinAlta[k]||0)+1; return 0; }
+  return (row.c||0)/100;
+}
+
+// ── COSTO: el MAESTRO pisa al SISTEMA cuando la línea se desvía demasiado ──
+// El costo del sistema es un promedio ponderado que se puede corromper: el 22-jun-2026 el
+// Fusilli Lunghi al Huevo pasó de $3.533/kg a $9.106 y después a $10.774, y arrastró todo julio.
+// Si una línea se aparta más de TOL_COSTO del costo unitario del maestro, se usa el del maestro
+// y se registra el pisado para avisarlo en el panel de control de la carga.
+const TOL_COSTO=0.25;   // 25% — el maestro suele ir ~9% atrás por actualización de lista
+let _ctrlPisados=[];
+function maestroDe(prod){const up=s=>String(s||'').trim().toUpperCase();
+  return _cargaProductos.find(x=>up(x.nd)===up(prod)||up(x.ns)===up(prod));}
+function costoCorregido(prod,kg,costoTotal,cli,record){
+  if(!kg||costoTotal===null||costoTotal===0) return costoTotal;
+  const mp=maestroDe(prod); if(!mp||!(mp.c>0)) return costoTotal;
+  const ckg=costoTotal/kg, desv=ckg/mp.c-1;
+  if(Math.abs(desv)<=TOL_COSTO) return costoTotal;
+  if(record) _ctrlPisados.push({cli,prod,kg,sistema:ckg,maestro:mp.c,desv});
+  return kg*mp.c;
+}
+
+// ── CONTROL DE CARGA: arma el panel de verificación del mes ──
+function buildControlHTML(){
+  const B=[];
+  const sa=Object.keys(_comSinAlta);
+  if(sa.length) B.push(`<div class="alert ar" style="margin-top:8px"><strong>⚠ Vendedores sin % de comisión en el maestro — se les aplicó 0%</strong><br>`+
+    sa.map(k=>`• ${k} — ${_comSinAlta[k]} líneas`).join('<br>')+
+    `<br><em>Dalos de alta en «3 — Comisiones por Vendedor» con el formato <code>Nombre LISTA</code>, ej. <code>Hernan Orellana MAYORISTA</code>.</em></div>`);
+
+  if(_ctrlAlertas.length) B.push(`<div class="alert ar" style="margin-top:8px"><strong>⚠ ${_ctrlAlertas.length} línea(s) con COSTO ≥ VENTA</strong><br>`+
+    _ctrlAlertas.slice(0,15).map(a=>`• ${a.cli} — ${a.prod} — ${a.kg} kg — venta $${fm(a.venta)} vs costo $${fm(a.costo)}`).join('<br>')+
+    (_ctrlAlertas.length>15?`<br>…y ${_ctrlAlertas.length-15} más`:'')+`</div>`);
+
+  if(_ctrlPisados.length){
+    const tot=_ctrlPisados.reduce((a,x)=>a+x.kg*Math.abs(x.sistema-x.maestro),0);
+    B.push(`<div class="alert ar" style="margin-top:8px"><strong>⚠ ${_ctrlPisados.length} línea(s) con costo del sistema fuera de rango — se usó el costo del MAESTRO</strong><br>`+
+      _ctrlPisados.slice(0,15).map(x=>`• ${x.cli} — ${x.prod} — ${x.kg} kg — sistema $${fm(x.sistema)}/kg vs maestro $${fm(x.maestro)}/kg (${x.desv>0?'+':''}${(x.desv*100).toFixed(0)}%)`).join('<br>')+
+      (_ctrlPisados.length>15?`<br>…y ${_ctrlPisados.length-15} más`:'')+
+      `<br><strong>Impacto en el CMV: $${fm(tot)}</strong><br><em>Verificá el costeo en el sistema y que el maestro de productos esté al día.</em></div>`);
+  }
+
+  const disp=[];
+  for(const [p,m] of Object.entries(_ctrlCostos)){
+    const ks=Object.keys(m).map(Number).filter(x=>x>0); if(ks.length<2) continue;
+    const mn=Math.min(...ks), mx=Math.max(...ks);
+    if(mx/mn>1.15) disp.push({p,mn,mx,r:mx/mn,n:ks.length});
+  }
+  disp.sort((a,b)=>b.r-a.r);
+  if(disp.length) B.push(`<div class="alert ag" style="margin-top:8px"><strong>⚠ Productos con costo unitario inconsistente dentro del mismo mes</strong><br>`+
+    disp.map(d=>`• ${d.p} — ${d.n} costos distintos, de $${fm(d.mn)} a $${fm(d.mx)}/kg (x${d.r.toFixed(2)})`).join('<br>')+
+    `<br><em>Revisá el costeo en el sistema antes de dar el mes por bueno.</em></div>`);
+
+  const vs=[];
+  for(const [p,m] of Object.entries(_ctrlCostos)){
+    const up=s=>String(s||'').trim().toUpperCase();
+    const mp=_cargaProductos.find(x=>up(x.nd)===up(p)||up(x.ns)===up(p));
+    if(!mp||!mp.c){ vs.push({p,txt:'no está en tu maestro de productos o no tiene costo cargado'}); continue; }
+    let sk=0,sc=0; Object.entries(m).forEach(([c,k])=>{sk+=k;sc+=(+c)*k;});
+    const prom=sc/sk, d=(prom/mp.c-1)*100;
+    if(Math.abs(d)>10) vs.push({p,txt:`sistema $${fm(prom)}/kg vs maestro $${fm(mp.c)}/kg (${d>0?'+':''}${d.toFixed(0)}%)`});
+  }
+  if(vs.length) B.push(`<div class="alert ag" style="margin-top:8px"><strong>ℹ Costo del sistema vs tu maestro de productos</strong><br>`+
+    vs.map(v=>`• ${v.p} — ${v.txt}`).join('<br>')+`</div>`);
+
+  return B.length?B.join(''):'<div class="alert agr" style="margin-top:8px">✓ Control de carga sin observaciones.</div>';
+}
+
 async function processMonth(){
   const yr=parseInt(document.getElementById('l-yr').value);
   const mo=parseInt(document.getElementById('l-mo').value);
@@ -1526,6 +1609,7 @@ async function processMonth(){
   // Blanco/María: si Total c/IVA y Total s/IVA coinciden (sin diferencia de IVA), la venta
   // no está facturada ("María") y no le corresponde IIBB. Si difieren, está facturada.
   const pm={};
+  _comSinAlta={}; _ctrlCostos={}; _ctrlAlertas=[]; _ctrlPisados=[];
   let tv=0,ts=0,tk=0,tiibbAcc=0,tNegro=0;
   _vd.forEach(r=>{
     const cli=String(r[0]||'').trim();
@@ -1557,10 +1641,17 @@ async function processMonth(){
     if(!prod) return;
     if(!pm[prod]) pm[prod]={kg:0,v:0,costoTotal:0,com:0,iibb:0,vNegro:0,vend,cli};
     pm[prod].kg+=kg; pm[prod].v+=tos;
+    // ── CONTROL DE COSTOS: se registra el costo CRUDO del sistema, antes de corregir ──
+    if(kg>0&&costoTotal!==null&&costoTotal>0){
+      const ckg=costoTotal/kg;
+      (_ctrlCostos[prod]=_ctrlCostos[prod]||{})[ckg.toFixed(2)]=(_ctrlCostos[prod][ckg.toFixed(2)]||0)+kg;
+      if(costoTotal>=tos&&tos>0) _ctrlAlertas.push({cli,prod,kg,costo:costoTotal,venta:tos});
+    }
+    // El maestro pisa al sistema si la línea se desvía más de TOL_COSTO
+    costoTotal=costoCorregido(prod,kg,costoTotal,cli,true);
     if(costoTotal!==null&&costoTotal!==0) pm[prod].costoTotal+=costoTotal;
-    // Calculate commission per line using this row's vendedor
-    const comRowLine=_cargaComisiones.find(x=>x.v===vend);
-    const comPctLine=comRowLine?comRowLine.c/100:0;
+    // Comisión por línea: vendedor + lista de precios de ESA línea
+    const comPctLine=comPctFor(vend,lista);
     pm[prod].com+=tos*comPctLine;
     // IIBB (3%) solo sobre la porción facturada — las ventas María no lo generan
     if(facturada){ const iibbLine=tos*0.03; pm[prod].iibb+=iibbLine; tiibbAcc+=iibbLine; }
@@ -1635,10 +1726,9 @@ async function processMonth(){
     if(!cli||cli.toUpperCase()==='WEB') return;
     if(!cliMap[cli]) cliMap[cli]={cli,vend,lista:'',v:0,cmv:0,film:0,iibb:0,com:0,kg:0,vNegro:0,productos:{}};
     if(listaC&&!cliMap[cli].lista) cliMap[cli].lista=listaC;
-    const cv=costoLinea!==null?costoLinea:0;
+    const cv=costoCorregido(prod,kg,costoLinea,cli,false)||0;
     const fv=kg*filmKg;
-    const comRow=_cargaComisiones.find(x=>x.v===vend);
-    const comPct=comRow?comRow.c/100:0;
+    const comPct=comPctFor(vend,listaC);
     const comAmt=tos*comPct;
     const iibbAmt=facturada?tos*0.03:0;
     cliMap[cli].v+=tos; cliMap[cli].cmv+=cv; cliMap[cli].film+=fv;
@@ -1689,7 +1779,7 @@ async function processMonth(){
       `<div class="alert agr">✓ ${MN[mo]} ${yr} guardado en Firebase<br>
       Ventas: $${fm(ts)} | CMV: $${fm(tcmv)} | Film: $${fm(tfilm)} |
       IIBB: $${fm(tiibb)} | Comis.: $${fm(tComisiones)} |
-      Gastos Op.: $${fm(tgo)} | <strong>Res.Op: $${fm(ro)}</strong></div>`;
+      Gastos Op.: $${fm(tgo)} | <strong>Res.Op: $${fm(ro)}</strong></div>`+buildControlHTML();
   } else {
     document.getElementById('carga-status').textContent='⚠ Error al guardar — revisá Firestore';
     document.getElementById('load-res').innerHTML=
