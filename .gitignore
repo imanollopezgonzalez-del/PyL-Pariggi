@@ -11,3 +11,6 @@ node_modules/
 .DS_Store
 Thumbs.db
 *.log
+
+# Datos de ventas para análisis — el repo es público, no van acá
+analisis/
