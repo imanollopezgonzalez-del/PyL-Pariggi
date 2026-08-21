@@ -596,7 +596,7 @@ async function ls(){
     }
     const mthSnap = await COL_MONTHS.get();
     mthSnap.forEach(doc=>{ ST.months[doc.id]=doc.data(); });
-    repararTodo();   // los meses guardados traen el CMV y las comisiones viejas
+    await repararTodo();   // los meses guardados traen el CMV y las comisiones viejas
     return true;
   }catch(e){console.error('Firebase load error:',e); return false;}
 }
@@ -1648,11 +1648,21 @@ function repararMes(key){
   _cargaProductos=pr; _cargaComisiones=co; _ctrlPisados=pi; _comSinAlta=sa;
   return r;
 }
-function repararTodo(){
+async function repararTodo(){
   const out=[];
   Object.keys(ST.months).forEach(k=>{const r=repararMes(k); if(r&&r.lineas) out.push(r);});
-  if(out.length) console.info('P&L — meses reparados al cargar:',
+  if(!out.length) return out;
+  console.info('P&L — meses reparados al cargar:',
     out.map(r=>`${r.key}: ${r.lineas} lineas / ${r.kg.toFixed(1)} kg / CMV -$${Math.round(r.ajuste).toLocaleString('es-AR')}`).join(' | '));
+  // Persistir con la sesión del usuario logueado, para que quede corregido tambien en
+  // Firestore y no haya que repararlo en cada carga. Idempotente: la proxima vez no
+  // encuentra nada para corregir y no vuelve a escribir.
+  for(const r of out){
+    try{ const ok=await saveMonth(r.key);
+         console.info(ok?`P&L — ${r.key} corregido y guardado en Firestore`
+                        :`P&L — ${r.key} corregido en pantalla, pero NO se pudo guardar`);
+    }catch(e){ console.warn('P&L — no se pudo persistir',r.key,e); }
+  }
   return out;
 }
 
